@@ -1,0 +1,206 @@
+import { useState, useEffect } from 'react'
+import PageHeader from '../components/ui/PageHeader'
+import Card from '../components/ui/Card'
+import Input from '../components/ui/Input'
+import Button from '../components/ui/Button'
+import { supabase } from '../lib/supabase'
+import type { OfficeConfig, OfficeHours, DiaSemana } from '../types'
+import { useToast } from '../contexts/ToastContext'
+import { Building2, Clock } from 'lucide-react'
+import clsx from 'clsx'
+
+const DIAS_ORDEM: DiaSemana[] = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
+
+export default function Configuracoes() {
+  const { success, error } = useToast()
+
+  const [config, setConfig] = useState<OfficeConfig | null>(null)
+  const [hours, setHours] = useState<Partial<Record<DiaSemana, OfficeHours>>>({})
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSavingConfig, setIsSavingConfig] = useState(false)
+  const [isSavingHours, setIsSavingHours] = useState(false)
+
+  const fetchData = async () => {
+    setIsLoading(true)
+    try {
+      const [configRes, hoursRes] = await Promise.all([
+        supabase.from('office_config').select('*').eq('id', 1).maybeSingle(),
+        supabase.from('office_hours').select('*')
+      ])
+
+      if (configRes.error) throw configRes.error
+      if (hoursRes.error) throw hoursRes.error
+
+      setConfig((configRes.data as OfficeConfig | null) ?? {
+        id: 1,
+        nome: '',
+        logo_url: null,
+        favicon_url: null,
+        updated_at: new Date().toISOString(),
+      })
+
+      const hoursMap: Partial<Record<DiaSemana, OfficeHours>> = {}
+      ;(hoursRes.data as OfficeHours[]).forEach(h => { hoursMap[h.dia] = h })
+      setHours(hoursMap)
+    } catch (err) {
+      console.error(err)
+      error('Erro ao carregar configurações')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchData() }, [])
+
+  const handleHourChange = (dia: DiaSemana, field: keyof OfficeHours, value: string | boolean) => {
+    setHours(prev => ({
+      ...prev,
+      [dia]: { ...prev[dia], [field]: value }
+    }))
+  }
+
+  const saveConfig = async () => {
+    if (!config) return
+    setIsSavingConfig(true)
+    try {
+      const { error: err } = await supabase
+        .from('office_config')
+        .update({ nome: config.nome, logo_url: config.logo_url, favicon_url: config.favicon_url, updated_at: new Date().toISOString() })
+        .eq('id', 1)
+      if (err) throw err
+      success('Informações do escritório salvas')
+    } catch (err) {
+      console.error(err)
+      error('Erro ao salvar informações')
+    } finally {
+      setIsSavingConfig(false)
+    }
+  }
+
+  const saveHours = async () => {
+    setIsSavingHours(true)
+    try {
+      const updates = Object.values(hours).filter(Boolean).map(h => ({
+        id: h!.id,
+        dia: h!.dia,
+        aberto: h!.aberto,
+        hora_inicio: h!.hora_inicio || null,
+        hora_fim: h!.hora_fim || null
+      }))
+      const { error: err } = await supabase.from('office_hours').upsert(updates)
+      if (err) throw err
+      success('Horários salvos com sucesso')
+    } catch (err) {
+      console.error(err)
+      error('Erro ao salvar horários')
+    } finally {
+      setIsSavingHours(false)
+    }
+  }
+
+  if (isLoading) {
+    return <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div></div>
+  }
+
+  return (
+    <div className="max-w-4xl">
+      <PageHeader
+        title="Configurações"
+        description="Personalize as informações do seu escritório — nome, logo, favicon e horário de funcionamento. O horário configurado aqui reflete automaticamente nos relatórios do dashboard."
+      />
+
+      <div className="flex flex-col gap-8">
+        {/* Seção 1 */}
+        <Card className="flex flex-col gap-6">
+          <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
+            <Building2 size={20} className="text-[var(--accent)]" />
+            Informações do Escritório
+          </h3>
+
+          {config && (
+            <div className="flex flex-col gap-4 max-w-lg">
+              <Input
+                label="Nome do Escritório"
+                value={config.nome || ''}
+                onChange={(e) => setConfig({ ...config, nome: e.target.value })}
+              />
+              <Input
+                label="URL do Logo"
+                placeholder="https://..."
+                value={config.logo_url || ''}
+                onChange={(e) => setConfig({ ...config, logo_url: e.target.value })}
+              />
+              <Input
+                label="URL do Favicon"
+                placeholder="https://..."
+                value={config.favicon_url || ''}
+                onChange={(e) => setConfig({ ...config, favicon_url: e.target.value })}
+              />
+              <div className="pt-2">
+                <Button onClick={saveConfig} isLoading={isSavingConfig}>Salvar Informações</Button>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {/* Seção 2 */}
+        <Card className="flex flex-col gap-6">
+          <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
+            <Clock size={20} className="text-[var(--accent)]" />
+            Horário de Funcionamento
+          </h3>
+
+          <div className="flex flex-col gap-4">
+            <div className="hidden sm:grid grid-cols-12 gap-4 px-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+              <div className="col-span-3">Dia da Semana</div>
+              <div className="col-span-3">Status</div>
+              <div className="col-span-3">Abertura</div>
+              <div className="col-span-3">Fechamento</div>
+            </div>
+
+            {DIAS_ORDEM.map(dia => {
+              const row = hours[dia]
+              if (!row) return null
+              return (
+                <div key={dia} className="flex flex-col sm:grid sm:grid-cols-12 gap-4 items-center bg-[var(--bg-base)] p-4 rounded-[8px] border border-[var(--border-card)]">
+                  <div className="col-span-3 w-full capitalize font-medium text-[var(--text-main)]">{dia}</div>
+                  <div className="col-span-3 w-full flex items-center">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={row.aberto}
+                        onChange={(e) => handleHourChange(dia, 'aberto', e.target.checked)}
+                      />
+                      <div className={clsx(
+                        "w-11 h-6 rounded-full relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white",
+                        row.aberto ? "bg-[var(--success)]" : "bg-gray-300"
+                      )}></div>
+                      <span className="ml-3 text-sm font-medium text-[var(--text-main)]">
+                        {row.aberto ? 'Aberto' : 'Fechado'}
+                      </span>
+                    </label>
+                  </div>
+                  <div className="col-span-3 w-full">
+                    {row.aberto && (
+                      <Input type="time" value={row.hora_inicio || ''} onChange={(e) => handleHourChange(dia, 'hora_inicio', e.target.value)} />
+                    )}
+                  </div>
+                  <div className="col-span-3 w-full">
+                    {row.aberto && (
+                      <Input type="time" value={row.hora_fim || ''} onChange={(e) => handleHourChange(dia, 'hora_fim', e.target.value)} />
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+
+            <div className="pt-4 flex justify-end">
+              <Button onClick={saveHours} isLoading={isSavingHours}>Salvar Horários</Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
+  )
+}

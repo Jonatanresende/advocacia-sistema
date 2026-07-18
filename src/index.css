@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@config "../tailwind.config.js";
+
+/* Dark mode via classe .dark no <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Tokens — Light Mode */
+:root {
+  --bg-base: #F8F6F1;
+  --bg-sidebar: #1C2B3A;
+  --bg-card: #FFFFFF;
+  --border-card: #E8E2D9;
+  --primary: #1C2B3A;
+  --primary-hover: #243547;
+  --accent: #C9A84C;
+  --accent-light: #FBF5E6;
+  --text-main: #1C2B3A;
+  --text-muted: #7A7060;
+  --success: #4A7C59;
+  --warning: #D4834A;
+  --danger: #B94040;
+  --sidebar-text: #FFFFFF;
+  --sidebar-muted: #8BA0B4;
+  --sidebar-active: #243547;
+  --sidebar-border: #2D3F52;
+}
+
+/* Tokens — Dark Mode */
+.dark {
+  --bg-base: #111820;
+  --bg-sidebar: #0D1520;
+  --bg-card: #1A2535;
+  --border-card: #253040;
+  --primary: #C9A84C;
+  --primary-hover: #D4B86A;
+  --accent: #C9A84C;
+  --accent-light: #2A2215;
+  --text-main: #EAE4D8;
+  --text-muted: #8A9AAA;
+  --success: #4A7C59;
+  --warning: #D4834A;
+  --danger: #B94040;
+  --sidebar-text: #EAE4D8;
+  --sidebar-muted: #5A7090;
+  --sidebar-active: #1A2535;
+  --sidebar-border: #1A2535;
+}
+
+/* Base */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-base);
+  color: var(--text-main);
+  font-family: 'DM Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+h1,
+h2,
+h3 {
+  font-family: 'Playfair Display', serif;
+}
