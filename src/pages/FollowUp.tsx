@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import PageHeader from '../components/ui/PageHeader'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import { useFollowUp } from '../hooks/useFollowUp'
-import { format } from 'date-fns'
+import { differenceInMinutes, format } from 'date-fns'
 import { Bell, Inbox } from 'lucide-react'
 
 const COLUMNS = [
@@ -19,6 +20,17 @@ const COLUMNS = [
 export default function FollowUp() {
   const navigate = useNavigate()
   const { leads, isLoading } = useFollowUp()
+  const [, setTick] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => setTick((value) => value + 1), 60_000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const minutosSemResposta = (ultimaMensagem: string | null) => {
+    if (!ultimaMensagem) return null
+    return differenceInMinutes(new Date(), new Date(ultimaMensagem))
+  }
 
   return (
     <div>
@@ -96,7 +108,9 @@ export default function FollowUp() {
                       {lead.ultima_mensagem ? format(new Date(lead.ultima_mensagem), 'dd/MM/yyyy HH:mm') : '-'}
                     </td>
                     <td className="p-4 text-sm font-medium text-[var(--text-main)] whitespace-nowrap">
-                      {lead.minutos_ultima_mensagem != null ? `${lead.minutos_ultima_mensagem} min` : '-'}
+                      {lead.ultima_mensagem
+                        ? `${minutosSemResposta(lead.ultima_mensagem)} min`
+                        : '-'}
                     </td>
                   </tr>
                 ))

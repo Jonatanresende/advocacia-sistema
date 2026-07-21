@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type { LeadAdv } from '../types'
 import { useToast } from '../contexts/ToastContext'
+import { subMinutes } from 'date-fns'
 
 export function useFollowUp() {
   const [leads, setLeads] = useState<LeadAdv[]>([])
@@ -11,13 +12,16 @@ export function useFollowUp() {
   const fetchLeads = useCallback(async () => {
     setIsLoading(true)
     try {
+      const limiteUltimaMensagem = subMinutes(new Date(), 20).toISOString()
+
       const { data, error: err } = await supabase
         .from('leads_adv')
         .select('*')
-        .gte('minutos_ultima_mensagem', 20)
+        .not('ultima_mensagem', 'is', null)
+        .lte('ultima_mensagem', limiteUltimaMensagem)
         .neq('status', 'consulta_agendada')
         .neq('status', 'compareceu')
-        .order('minutos_ultima_mensagem', { ascending: false })
+        .order('ultima_mensagem', { ascending: true })
 
       if (err) throw err
 
