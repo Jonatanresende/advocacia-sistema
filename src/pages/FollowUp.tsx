@@ -6,6 +6,16 @@ import { useFollowUp } from '../hooks/useFollowUp'
 import { format } from 'date-fns'
 import { Bell, Inbox } from 'lucide-react'
 
+const COLUMNS = [
+  'Início do Atendimento',
+  'Nome',
+  'WhatsApp',
+  'Motivo do Contato',
+  'Status',
+  'Última Mensagem',
+  'Minutos sem resposta',
+] as const
+
 export default function FollowUp() {
   const navigate = useNavigate()
   const { leads, isLoading } = useFollowUp()
@@ -18,34 +28,47 @@ export default function FollowUp() {
       />
 
       <Card noPadding>
-        {isLoading ? (
-          <div className="p-8 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
-          </div>
-        ) : leads.length === 0 ? (
-          <div className="p-12 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 bg-[var(--bg-base)] rounded-full flex items-center justify-center mb-4">
-              <Inbox size={24} className="text-[var(--text-muted)]" />
-            </div>
-            <h3 className="text-lg font-medium text-[var(--text-main)] font-display mb-1">Nenhum follow up pendente</h3>
-            <p className="text-[var(--text-muted)] text-sm">Ótimo trabalho! Todos os leads estão atualizados.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-[var(--border-card)] bg-[var(--bg-base)]">
-                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Início do Atendimento</th>
-                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Nome</th>
-                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">WhatsApp</th>
-                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Motivo do Contato</th>
-                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
-                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Última Mensagem</th>
-                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Minutos sem resposta</th>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-[var(--border-card)] bg-[var(--bg-base)]">
+                {COLUMNS.map((column) => (
+                  <th
+                    key={column}
+                    className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider whitespace-nowrap"
+                  >
+                    {column}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--border-card)]">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={COLUMNS.length} className="p-8">
+                    <div className="flex justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]" />
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-[var(--border-card)]">
-                {leads.map((lead) => (
+              ) : leads.length === 0 ? (
+                <tr>
+                  <td colSpan={COLUMNS.length} className="p-12">
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <div className="w-16 h-16 bg-[var(--bg-base)] rounded-full flex items-center justify-center mb-4">
+                        <Inbox size={24} className="text-[var(--text-muted)]" />
+                      </div>
+                      <h3 className="text-lg font-medium text-[var(--text-main)] font-display mb-1">
+                        Nenhum follow up pendente
+                      </h3>
+                      <p className="text-[var(--text-muted)] text-sm">
+                        Ótimo trabalho! Todos os leads estão atualizados.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                leads.map((lead) => (
                   <tr
                     key={lead.id}
                     onClick={() => navigate(`/leads/${lead.id}`)}
@@ -76,11 +99,11 @@ export default function FollowUp() {
                       {lead.minutos_ultima_mensagem != null ? `${lead.minutos_ultima_mensagem} min` : '-'}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </Card>
     </div>
   )
