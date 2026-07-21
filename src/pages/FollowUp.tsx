@@ -4,7 +4,7 @@ import PageHeader from '../components/ui/PageHeader'
 import FilterBar from '../components/ui/FilterBar'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
-import { useLeads } from '../hooks/useLeads'
+import { useFollowUp } from '../hooks/useFollowUp'
 import type { DateFilter } from '../types'
 import { format } from 'date-fns'
 import { Bell, Inbox } from 'lucide-react'
@@ -12,7 +12,7 @@ import { Bell, Inbox } from 'lucide-react'
 export default function FollowUp() {
   const navigate = useNavigate()
   const [filter, setFilter] = useState<DateFilter>({ preset: 'este_mes', startDate: '', endDate: '' })
-  const { leads, isLoading } = useLeads(filter, 'follow_up')
+  const { leads, isLoading } = useFollowUp(filter)
 
   return (
     <div>
@@ -45,8 +45,9 @@ export default function FollowUp() {
                   <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Nome</th>
                   <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">WhatsApp</th>
                   <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Motivo do Contato</th>
-                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Última Mensagem</th>
                   <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
+                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Última Mensagem</th>
+                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Minutos sem resposta</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-card)]">
@@ -71,11 +72,14 @@ export default function FollowUp() {
                     <td className="p-4 text-sm text-[var(--text-muted)] max-w-[200px] truncate">
                       {lead.motivo_contato || '-'}
                     </td>
+                    <td className="p-4">
+                      <Badge status={lead.status} />
+                    </td>
                     <td className="p-4 text-sm text-[var(--text-muted)] whitespace-nowrap">
                       {lead.ultima_mensagem ? format(new Date(lead.ultima_mensagem), 'dd/MM/yyyy HH:mm') : '-'}
                     </td>
-                    <td className="p-4">
-                      <Badge status={lead.status} />
+                    <td className="p-4 text-sm font-medium text-[var(--text-main)] whitespace-nowrap">
+                      {lead.minutos_ultima_mensagem != null ? `${lead.minutos_ultima_mensagem} min` : '-'}
                     </td>
                   </tr>
                 ))}
