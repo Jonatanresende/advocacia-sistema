@@ -1,17 +1,17 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/ui/PageHeader'
-import FilterBar from '../components/ui/FilterBar'
 import Card from '../components/ui/Card'
 import Modal from '../components/ui/Modal'
 import Button from '../components/ui/Button'
 import { useAgendamentos } from '../hooks/useAgendamentos'
-import type { DateFilter, AgendamentoStatus } from '../types'
+import type { AgendamentoStatus } from '../types'
 import { format } from 'date-fns'
 import { CalendarDays, Inbox } from 'lucide-react'
 
 export default function Agendamentos() {
-  const [filter, setFilter] = useState<DateFilter>({ preset: 'este_mes', startDate: '', endDate: '' })
-  const { agendamentos, isLoading, updateStatus } = useAgendamentos(filter)
+  const navigate = useNavigate()
+  const { agendamentos, isLoading, updateStatus } = useAgendamentos()
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedAgendamento, setSelectedAgendamento] = useState<{ id: string; status: AgendamentoStatus } | null>(null)
@@ -39,10 +39,8 @@ export default function Agendamentos() {
     <div>
       <PageHeader
         title="Agendamentos"
-        description="Gerencie todas as consultas marcadas no escritório. Atualize o status de cada agendamento diretamente por aqui — ao confirmar o comparecimento, o lead é promovido a cliente automaticamente."
+        description="Gerencie todas as consultas marcadas no escritório. Clique em qualquer linha para ver o histórico do lead. Atualize o status de cada agendamento — ao confirmar o comparecimento, o lead é promovido a cliente automaticamente."
       />
-
-      <FilterBar filter={filter} onChange={setFilter} />
 
       <Card noPadding>
         {isLoading ? (
@@ -55,7 +53,7 @@ export default function Agendamentos() {
               <Inbox size={24} className="text-[var(--text-muted)]" />
             </div>
             <h3 className="text-lg font-medium text-[var(--text-main)] font-display mb-1">Nenhum agendamento encontrado</h3>
-            <p className="text-[var(--text-muted)] text-sm">Tente ajustar o filtro de datas.</p>
+            <p className="text-[var(--text-muted)] text-sm">Os agendamentos aparecerão aqui quando forem marcados.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -72,8 +70,14 @@ export default function Agendamentos() {
               <tbody className="divide-y divide-[var(--border-card)]">
                 {agendamentos.map((agendamento) => {
                   const lead = agendamento.lead
+                  const leadId = agendamento.lead_id || lead?.id
+
                   return (
-                    <tr key={agendamento.id} className="hover:bg-[var(--bg-base)] transition-colors">
+                    <tr
+                      key={agendamento.id}
+                      onClick={() => leadId && navigate(`/leads/${leadId}`)}
+                      className={leadId ? 'hover:bg-[var(--bg-base)] cursor-pointer transition-colors' : 'hover:bg-[var(--bg-base)] transition-colors'}
+                    >
                       <td className="p-4 text-sm text-[var(--text-main)] whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <CalendarDays size={16} className="text-[var(--accent)]" />
@@ -87,7 +91,7 @@ export default function Agendamentos() {
                       <td className="p-4 text-sm text-[var(--text-muted)] max-w-[200px] truncate">
                         {lead?.motivo_contato || '-'}
                       </td>
-                      <td className="p-4">
+                      <td className="p-4" onClick={(e) => e.stopPropagation()}>
                         <select
                           value={agendamento.status}
                           onChange={(e) => handleStatusChange(agendamento.id, e.target.value as AgendamentoStatus)}
