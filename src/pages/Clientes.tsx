@@ -1,26 +1,20 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/ui/PageHeader'
-import FilterBar from '../components/ui/FilterBar'
 import Card from '../components/ui/Card'
 import { useClientes } from '../hooks/useClientes'
-import type { DateFilter } from '../types'
 import { format } from 'date-fns'
 import { UserCheck, Inbox } from 'lucide-react'
 
 export default function Clientes() {
   const navigate = useNavigate()
-  const [filter, setFilter] = useState<DateFilter>({ preset: 'este_ano', startDate: '', endDate: '' })
-  const { clientes, isLoading } = useClientes(filter)
+  const { clientes, isLoading } = useClientes()
 
   return (
     <div>
       <PageHeader
         title="Clientes"
-        description="Todos os contatos que já compareceram a uma consulta presencial ou online. A promoção de lead para cliente acontece automaticamente quando a consulta é confirmada."
+        description="Todos os contatos que já compareceram a uma consulta presencial ou online. A promoção de lead para cliente acontece automaticamente quando o comparecimento é confirmado."
       />
-
-      <FilterBar filter={filter} onChange={setFilter} />
 
       <Card noPadding>
         {isLoading ? (
@@ -33,7 +27,7 @@ export default function Clientes() {
               <Inbox size={24} className="text-[var(--text-muted)]" />
             </div>
             <h3 className="text-lg font-medium text-[var(--text-main)] font-display mb-1">Nenhum cliente encontrado</h3>
-            <p className="text-[var(--text-muted)] text-sm">Tente ajustar o filtro de datas.</p>
+            <p className="text-[var(--text-muted)] text-sm">Os clientes aparecerão aqui quando um lead for marcado como compareceu.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
