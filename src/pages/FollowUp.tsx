@@ -1,18 +1,14 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PageHeader from '../components/ui/PageHeader'
-import FilterBar from '../components/ui/FilterBar'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import { useFollowUp } from '../hooks/useFollowUp'
-import type { DateFilter } from '../types'
 import { format } from 'date-fns'
 import { Bell, Inbox } from 'lucide-react'
 
 export default function FollowUp() {
   const navigate = useNavigate()
-  const [filter, setFilter] = useState<DateFilter>({ preset: 'este_mes', startDate: '', endDate: '' })
-  const { leads, isLoading } = useFollowUp(filter)
+  const { leads, isLoading } = useFollowUp()
 
   return (
     <div>
@@ -20,8 +16,6 @@ export default function FollowUp() {
         title="Follow Up"
         description="Leads que precisam de acompanhamento para avançar no funil. O Agente de IA realiza os follow ups automaticamente, garantindo que nenhuma oportunidade seja perdida."
       />
-
-      <FilterBar filter={filter} onChange={setFilter} />
 
       <Card noPadding>
         {isLoading ? (
