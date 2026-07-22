@@ -4,6 +4,10 @@ import type { LeadAdv } from '../types'
 import { useToast } from '../contexts/ToastContext'
 import { subMinutes } from 'date-fns'
 
+function referenciaUltimaInteracao(lead: LeadAdv): string | null {
+  return lead.ultima_mensagem ?? lead.inicio_atendimento
+}
+
 export function useFollowUp() {
   const [leads, setLeads] = useState<LeadAdv[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -17,15 +21,28 @@ export function useFollowUp() {
       const { data, error: err } = await supabase
         .from('leads_adv')
         .select('*')
-        .not('ultima_mensagem', 'is', null)
-        .lte('ultima_mensagem', limiteUltimaMensagem)
         .neq('status', 'consulta_agendada')
         .neq('status', 'compareceu')
-        .order('ultima_mensagem', { ascending: true })
+        .or(
+          `ultima_mensagem.lte.${limiteUltimaMensagem},and(ultima_mensagem.is.null,inicio_atendimento.lte.${limiteUltimaMensagem})`
+        )
+        .order('ultima_mensagem', { ascending: true, nullsFirst: false })
 
       if (err) throw err
 
-      setLeads(data as LeadAdv[])
+      const filtrados = (data as LeadAdv[]).filter((lead) => {
+        const referencia = referenciaUltimaInteracao(lead)
+        if (!referencia) return false
+        return new Date(referencia) <= new Date(limiteUltimaMensagem)
+      })
+
+      filtrados.sort(
+        (a, b) =>
+          new Date(referenciaUltimaInteracao(a)!).getTime() -
+          new Date(referenciaUltimaInteracao(b)!).getTime()
+      )
+
+      setLeads(filtrados)
     } catch (err: unknown) {
       console.error(err)
       error('Erro ao buscar follow ups')
@@ -40,3 +57,5 @@ export function useFollowUp() {
 
   return { leads, isLoading, refetch: fetchLeads }
 }
+
+export { referenciaUltimaInteracao }

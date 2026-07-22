@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import PageHeader from '../components/ui/PageHeader'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
-import { useFollowUp } from '../hooks/useFollowUp'
+import { useFollowUp, referenciaUltimaInteracao } from '../hooks/useFollowUp'
 import { differenceInMinutes, format } from 'date-fns'
 import { Bell, Inbox } from 'lucide-react'
 
@@ -27,9 +27,9 @@ export default function FollowUp() {
     return () => clearInterval(interval)
   }, [])
 
-  const minutosSemResposta = (ultimaMensagem: string | null) => {
-    if (!ultimaMensagem) return null
-    return differenceInMinutes(new Date(), new Date(ultimaMensagem))
+  const minutosSemResposta = (referencia: string | null) => {
+    if (!referencia) return null
+    return differenceInMinutes(new Date(), new Date(referencia))
   }
 
   return (
@@ -80,7 +80,10 @@ export default function FollowUp() {
                   </td>
                 </tr>
               ) : (
-                leads.map((lead) => (
+                leads.map((lead) => {
+                  const referencia = referenciaUltimaInteracao(lead)
+
+                  return (
                   <tr
                     key={lead.id}
                     onClick={() => navigate(`/leads/${lead.id}`)}
@@ -105,15 +108,14 @@ export default function FollowUp() {
                       <Badge status={lead.status} />
                     </td>
                     <td className="p-4 text-sm text-[var(--text-muted)] whitespace-nowrap">
-                      {lead.ultima_mensagem ? format(new Date(lead.ultima_mensagem), 'dd/MM/yyyy HH:mm') : '-'}
+                      {referencia ? format(new Date(referencia), 'dd/MM/yyyy HH:mm') : '-'}
                     </td>
                     <td className="p-4 text-sm font-medium text-[var(--text-main)] whitespace-nowrap">
-                      {lead.ultima_mensagem
-                        ? `${minutosSemResposta(lead.ultima_mensagem)} min`
-                        : '-'}
+                      {referencia ? `${minutosSemResposta(referencia)} min` : '-'}
                     </td>
                   </tr>
-                ))
+                  )
+                })
               )}
             </tbody>
           </table>
