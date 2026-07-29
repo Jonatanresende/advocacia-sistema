@@ -44,13 +44,13 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
   return (
     <aside
       className={clsx(
-        'w-[240px] shrink-0 h-full bg-[var(--bg-sidebar)] border-r border-[var(--sidebar-border)] flex flex-col transition-colors z-40',
+        'w-[240px] shrink-0 h-full bg-[#182635] border-r border-white/5 flex flex-col transition-colors z-40',
         className
       )}
     >
-      <div className="h-16 flex items-center px-6 gap-3 shrink-0 border-b border-[var(--sidebar-border)]">
-        <Scale className="text-[var(--accent)] shrink-0" size={24} />
-        <span className="text-[var(--sidebar-text)] font-display text-sm font-semibold tracking-wide uppercase leading-tight">
+      <div className="h-16 flex items-center px-5 gap-3 shrink-0 border-b border-white/5">
+        <Scale className="text-[var(--accent)] shrink-0" size={22} />
+        <span className="text-white font-display text-sm font-semibold tracking-wide uppercase leading-tight">
           Escritório de Advocacia
         </span>
       </div>
@@ -63,42 +63,47 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
             onClick={onNavigate}
             className={({ isActive }) =>
               clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-[8px] transition-all group font-medium text-sm',
+                'relative flex items-center gap-3 px-3 py-2 rounded-lg transition-all font-medium text-[13px]',
                 isActive
-                  ? 'bg-[var(--sidebar-active)] text-[var(--sidebar-text)] border-l-[3px] border-[var(--accent)]'
-                  : 'text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-active)] hover:text-[var(--sidebar-text)] border-l-[3px] border-transparent'
+                  ? 'bg-white/5 text-white'
+                  : 'text-[#94A3B8] hover:bg-white/5 hover:text-white'
               )
             }
           >
-            <item.icon size={18} className="shrink-0" />
-            <span>{item.label}</span>
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 bg-[var(--accent)] rounded-r-full" />
+                )}
+                <item.icon size={18} className="shrink-0" />
+                <span>{item.label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </nav>
 
-      <div className="p-4 mt-auto border-t border-[var(--sidebar-border)] flex flex-col gap-1">
+      <div className="p-3 mt-auto border-t border-white/5 flex flex-col gap-1">
         {user?.email && (
-          <p className="px-3 py-1.5 text-xs text-[var(--sidebar-muted)] truncate" title={user.email}>
+          <p className="px-3 py-1 mb-1 text-[11px] text-[#94A3B8]/50 truncate" title={user.email}>
             {user.email}
           </p>
         )}
         <button
           type="button"
           onClick={toggleTheme}
-          className="w-full flex items-center justify-between px-3 py-2.5 rounded-[8px] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-active)] hover:text-[var(--sidebar-text)] transition-colors text-sm font-medium"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[#94A3B8] hover:bg-white/5 hover:text-white transition-colors text-[13px] font-medium"
         >
-          <span className="flex items-center gap-3">
-            {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
-            {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-          </span>
+          {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+          <span>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
         </button>
         <button
           type="button"
           onClick={handleSignOut}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-[var(--sidebar-muted)] hover:bg-[var(--sidebar-active)] hover:text-[var(--sidebar-text)] transition-colors text-sm font-medium"
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[#94A3B8] hover:bg-white/5 hover:text-white transition-colors text-[13px] font-medium"
         >
           <LogOut size={18} />
-          Sair
+          <span>Sair</span>
         </button>
       </div>
     </aside>
