@@ -23,29 +23,29 @@ export default function Leads() {
 
       <FilterBar filter={filter} onChange={setFilter} />
 
-      <Card noPadding>
+      <Card noPadding className="shadow-none !border-[var(--border-card)] rounded-[14px] overflow-hidden">
         {isLoading ? (
-          <div className="p-8 flex justify-center">
+          <div className="p-12 flex justify-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
           </div>
         ) : leads.length === 0 ? (
-          <div className="p-12 flex flex-col items-center justify-center text-center">
-            <div className="w-16 h-16 bg-[var(--bg-base)] rounded-full flex items-center justify-center mb-4">
-              <Inbox size={24} className="text-[var(--text-muted)]" />
+          <div className="p-16 flex flex-col items-center justify-center text-center">
+            <div className="w-14 h-14 bg-[var(--bg-base)] rounded-[12px] flex items-center justify-center mb-4 border border-[var(--border-card)]">
+              <Inbox size={22} className="text-[var(--text-muted)]" />
             </div>
-            <h3 className="text-lg font-medium text-[var(--text-main)] font-display mb-1">Nenhum lead encontrado</h3>
-            <p className="text-[var(--text-muted)] text-sm">Tente ajustar o filtro de datas.</p>
+            <h3 className="text-[15px] font-semibold text-[var(--text-main)] font-display mb-1">Nenhum lead encontrado</h3>
+            <p className="text-[var(--text-muted)] text-[13px]">Tente ajustar o filtro de datas.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[var(--border-card)] bg-[var(--bg-base)]">
-                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Início do Atendimento</th>
-                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Nome</th>
-                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">WhatsApp</th>
-                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Motivo do Contato</th>
-                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
+                <tr className="border-b border-[var(--border-card)] bg-[var(--bg-base)]/50">
+                  <th className="p-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Início do Atendimento</th>
+                  <th className="p-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Nome</th>
+                  <th className="p-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">WhatsApp</th>
+                  <th className="p-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Motivo do Contato</th>
+                  <th className="p-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-card)]">
@@ -53,21 +53,21 @@ export default function Leads() {
                   <tr
                     key={lead.id}
                     onClick={() => navigate(`/leads/${lead.id}`)}
-                    className="hover:bg-[var(--bg-base)] cursor-pointer transition-colors"
+                    className="hover:bg-[var(--bg-base)] cursor-pointer transition-colors group"
                   >
-                    <td className="p-4 text-sm text-[var(--text-main)] whitespace-nowrap">
+                    <td className="p-4 text-[13px] text-[var(--text-main)] whitespace-nowrap">
                       {lead.inicio_atendimento ? format(new Date(lead.inicio_atendimento), 'dd/MM/yyyy HH:mm') : '-'}
                     </td>
-                    <td className="p-4 text-sm font-medium text-[var(--text-main)]">
+                    <td className="p-4 text-[13px] font-semibold text-[var(--text-main)]">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[var(--accent-light)] text-[var(--accent)] flex items-center justify-center shrink-0">
-                          <Users size={16} />
+                        <div className="w-8 h-8 rounded-[8px] bg-[var(--accent)]/10 text-[var(--accent)] flex items-center justify-center shrink-0">
+                          <Users size={15} />
                         </div>
                         {lead.nome_lead || 'Desconhecido'}
                       </div>
                     </td>
-                    <td className="p-4 text-sm text-[var(--text-muted)]">{lead.whatsapp_lead}</td>
-                    <td className="p-4 text-sm text-[var(--text-muted)] max-w-[200px] truncate">
+                    <td className="p-4 text-[13px] text-[var(--text-muted)] font-medium">{lead.whatsapp_lead}</td>
+                    <td className="p-4 text-[13px] text-[var(--text-muted)] max-w-[250px] truncate">
                       {lead.motivo_contato || '-'}
                     </td>
                     <td className="p-4">

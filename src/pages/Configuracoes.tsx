@@ -109,16 +109,16 @@ export default function Configuracoes() {
         description="Personalize as informações do seu escritório — nome, logo, favicon e horário de funcionamento. O horário configurado aqui reflete automaticamente nos relatórios do dashboard."
       />
 
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-6">
         {/* Seção 1 */}
-        <Card className="flex flex-col gap-6">
-          <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
-            <Building2 size={20} className="text-[var(--accent)]" />
+        <Card className="flex flex-col gap-6 shadow-none !border-[var(--border-card)] rounded-[14px] p-6">
+          <h3 className="font-semibold text-[16px] text-[var(--text-main)] font-display flex items-center gap-2.5 border-b border-[var(--border-card)] pb-4">
+            <Building2 size={18} className="text-[var(--accent)]" />
             Informações do Escritório
           </h3>
 
           {config && (
-            <div className="flex flex-col gap-4 max-w-lg">
+            <div className="flex flex-col gap-5 max-w-lg">
               <Input
                 label="Nome do Escritório"
                 value={config.nome || ''}
@@ -144,14 +144,14 @@ export default function Configuracoes() {
         </Card>
 
         {/* Seção 2 */}
-        <Card className="flex flex-col gap-6">
-          <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
-            <Clock size={20} className="text-[var(--accent)]" />
+        <Card className="flex flex-col gap-6 shadow-none !border-[var(--border-card)] rounded-[14px] p-6">
+          <h3 className="font-semibold text-[16px] text-[var(--text-main)] font-display flex items-center gap-2.5 border-b border-[var(--border-card)] pb-4">
+            <Clock size={18} className="text-[var(--accent)]" />
             Horário de Funcionamento
           </h3>
 
-          <div className="flex flex-col gap-4">
-            <div className="hidden sm:grid grid-cols-12 gap-4 px-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+          <div className="flex flex-col gap-3">
+            <div className="hidden sm:grid grid-cols-12 gap-4 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">
               <div className="col-span-3">Dia da Semana</div>
               <div className="col-span-3">Status</div>
               <div className="col-span-3">Abertura</div>
@@ -162,8 +162,8 @@ export default function Configuracoes() {
               const row = hours[dia]
               if (!row) return null
               return (
-                <div key={dia} className="flex flex-col sm:grid sm:grid-cols-12 gap-4 items-center bg-[var(--bg-base)] p-4 rounded-[8px] border border-[var(--border-card)]">
-                  <div className="col-span-3 w-full capitalize font-medium text-[var(--text-main)]">{dia}</div>
+                <div key={dia} className="flex flex-col sm:grid sm:grid-cols-12 gap-4 items-center bg-[var(--bg-base)]/50 p-4 rounded-[12px] border border-[var(--border-card)] hover:bg-[var(--bg-base)] transition-colors">
+                  <div className="col-span-3 w-full capitalize font-semibold text-[13px] text-[var(--text-main)]">{dia}</div>
                   <div className="col-span-3 w-full flex items-center">
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input
@@ -173,10 +173,10 @@ export default function Configuracoes() {
                         onChange={(e) => handleHourChange(dia, 'aberto', e.target.checked)}
                       />
                       <div className={clsx(
-                        "w-11 h-6 rounded-full relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white",
-                        row.aberto ? "bg-[var(--success)]" : "bg-gray-300"
+                        "w-11 h-6 rounded-full relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--border-card)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white",
+                        row.aberto ? "bg-[var(--accent)]" : "bg-[var(--border-card)]"
                       )}></div>
-                      <span className="ml-3 text-sm font-medium text-[var(--text-main)]">
+                      <span className="ml-3 text-[13px] font-medium text-[var(--text-main)]">
                         {row.aberto ? 'Aberto' : 'Fechado'}
                       </span>
                     </label>
