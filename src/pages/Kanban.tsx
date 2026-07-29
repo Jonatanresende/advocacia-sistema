@@ -25,7 +25,7 @@ import { CSS } from '@dnd-kit/utilities'
 import PageHeader from '../components/ui/PageHeader'
 import Modal from '../components/ui/Modal'
 import Button from '../components/ui/Button'
-import Badge from '../components/ui/Badge'
+import Badge, { areaPrevidenciariaLabels } from '../components/ui/Badge'
 import { useLeads } from '../hooks/useLeads'
 import type { LeadAdv, LeadStatus } from '../types'
 import { format } from 'date-fns'
@@ -73,6 +73,11 @@ function SortableItem({ lead }: { lead: LeadAdv }) {
       <p className="text-xs text-[var(--text-muted)] line-clamp-2 mb-2">
         {lead.motivo_contato || 'Sem motivo informado'}
       </p>
+      {lead.area_previdenciaria && lead.area_previdenciaria !== 'nao_identificada' && (
+        <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-[var(--bg-base)] border border-[var(--border-card)] text-[var(--text-muted)] mb-2">
+          {areaPrevidenciariaLabels[lead.area_previdenciaria]}
+        </span>
+      )}
       <span className="text-[10px] text-[var(--text-muted)] block text-right">
         {lead.inicio_atendimento ? format(new Date(lead.inicio_atendimento), 'dd/MM HH:mm') : ''}
       </span>

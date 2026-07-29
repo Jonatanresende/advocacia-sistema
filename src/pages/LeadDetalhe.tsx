@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Card from '../components/ui/Card'
-import { statusConfig } from '../components/ui/Badge'
+import Badge, { statusConfig, areaPrevidenciariaLabels } from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import { supabase } from '../lib/supabase'
 import type { LeadAdv, LeadStatus } from '../types'
-import { ArrowLeft, Clock, MessageSquare, Edit3, Calendar } from 'lucide-react'
+import { ArrowLeft, Clock, MessageSquare, Edit3, Calendar, ShieldCheck } from 'lucide-react'
 import { format } from 'date-fns'
 import { useToast } from '../contexts/ToastContext'
 
@@ -129,6 +129,36 @@ export default function LeadDetalhe() {
               </div>
             </div>
           </Card>
+
+          {lead.area_previdenciaria && lead.area_previdenciaria !== 'nao_identificada' && (
+            <Card className="flex flex-col gap-4">
+              <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
+                <ShieldCheck size={18} className="text-[var(--accent)]" />
+                Qualificação Previdenciária
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
+                <div>
+                  <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Área Identificada</p>
+                  <p className="font-medium text-[var(--text-main)]">{areaPrevidenciariaLabels[lead.area_previdenciaria]}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Veredito da Triagem</p>
+                  <Badge status={lead.status_qualificacao} />
+                </div>
+                {lead.respostas_qualificacao?.texto && (
+                  <div className="sm:col-span-2">
+                    <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Respostas Coletadas pela IA</p>
+                    <div className="bg-[var(--bg-base)] p-3 rounded-[8px] text-sm text-[var(--text-main)] whitespace-pre-wrap mt-1">
+                      {lead.respostas_qualificacao.texto}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-[var(--text-muted)] italic">
+                Triagem feita por IA — a confirmação final do direito ao benefício é sempre do advogado.
+              </p>
+            </Card>
+          )}
 
           <Card className="flex flex-col gap-4">
             <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">

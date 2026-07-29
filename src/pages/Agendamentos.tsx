@@ -7,7 +7,7 @@ import Button from '../components/ui/Button'
 import { useAgendamentos } from '../hooks/useAgendamentos'
 import type { AgendamentoStatus } from '../types'
 import { format } from 'date-fns'
-import { CalendarDays, Inbox } from 'lucide-react'
+import { CalendarDays, Inbox, Video, MapPin } from 'lucide-react'
 
 export default function Agendamentos() {
   const navigate = useNavigate()
@@ -61,6 +61,7 @@ export default function Agendamentos() {
               <thead>
                 <tr className="border-b border-[var(--border-card)] bg-[var(--bg-base)]">
                   <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Data do Agendamento</th>
+                  <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Modalidade</th>
                   <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Nome</th>
                   <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">WhatsApp</th>
                   <th className="p-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Motivo do Contato</th>
@@ -82,6 +83,15 @@ export default function Agendamentos() {
                         <div className="flex items-center gap-2">
                           <CalendarDays size={16} className="text-[var(--accent)]" />
                           <span className="font-medium">{format(new Date(agendamento.data_hora_inicio), 'dd/MM/yyyy HH:mm')}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-[var(--text-muted)] whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          {agendamento.modalidade === 'online' ? (
+                            <><Video size={14} /> Online</>
+                          ) : (
+                            <><MapPin size={14} /> Presencial</>
+                          )}
                         </div>
                       </td>
                       <td className="p-4 text-sm font-medium text-[var(--text-main)]">

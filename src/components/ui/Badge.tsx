@@ -1,7 +1,7 @@
-import type { LeadStatus, AgendamentoStatus } from '../../types'
+import type { LeadStatus, AgendamentoStatus, StatusQualificacao, AreaPrevidenciaria } from '../../types'
 
 interface BadgeProps {
-  status: LeadStatus | AgendamentoStatus
+  status: LeadStatus | AgendamentoStatus | StatusQualificacao
   label?: string
 }
 
@@ -19,6 +19,25 @@ export const statusConfig: Record<string, { bg: string; text: string; border: st
   confirmado: { bg: '#F0FDF4', text: '#166534', border: '#BBF7D0', label: 'Confirmado' },
   faltou: { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA', label: 'Faltou' },
   cancelado: { bg: '#F3F4F6', text: '#6B7280', border: '#E5E7EB', label: 'Cancelado' },
+  // status_qualificacao (qualificação previdenciária)
+  pendente: { bg: '#F3F4F6', text: '#6B7280', border: '#E5E7EB', label: 'Qualificação Pendente' },
+  provavel_direito: { bg: '#F0FDF4', text: '#166534', border: '#BBF7D0', label: 'Provável Direito' },
+  duvidoso: { bg: '#FEF9E7', text: '#92600A', border: '#FDE68A', label: 'Duvidoso' },
+  sem_direito_aparente: { bg: '#F3F4F6', text: '#6B7280', border: '#E5E7EB', label: 'Sem Direito Aparente' },
+}
+
+export const areaPrevidenciariaLabels: Record<AreaPrevidenciaria, string> = {
+  aposentadoria_idade: 'Aposentadoria por Idade',
+  aposentadoria_tempo_contribuicao: 'Aposentadoria por Tempo de Contribuição',
+  aposentadoria_especial: 'Aposentadoria Especial',
+  aposentadoria_invalidez: 'Aposentadoria por Invalidez',
+  auxilio_doenca: 'Auxílio por Incapacidade (Doença)',
+  bpc_loas: 'BPC/LOAS',
+  pensao_morte: 'Pensão por Morte',
+  auxilio_acidente: 'Auxílio-Acidente',
+  salario_maternidade: 'Salário-Maternidade',
+  revisao_beneficio: 'Revisão de Benefício',
+  nao_identificada: 'Área Não Identificada',
 }
 
 export default function Badge({ status, label }: BadgeProps) {

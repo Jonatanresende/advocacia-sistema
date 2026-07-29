@@ -25,6 +25,27 @@ export type DiaSemana =
   | 'sexta'
   | 'sabado'
 
+export type AreaPrevidenciaria =
+  | 'aposentadoria_idade'
+  | 'aposentadoria_tempo_contribuicao'
+  | 'aposentadoria_especial'
+  | 'aposentadoria_invalidez'
+  | 'auxilio_doenca'
+  | 'bpc_loas'
+  | 'pensao_morte'
+  | 'auxilio_acidente'
+  | 'salario_maternidade'
+  | 'revisao_beneficio'
+  | 'nao_identificada'
+
+export type StatusQualificacao =
+  | 'pendente'
+  | 'provavel_direito'
+  | 'duvidoso'
+  | 'sem_direito_aparente'
+
+export type ModalidadeAtendimento = 'online' | 'presencial'
+
 // ─── TABELAS ──────────────────────────────────────────────────────────────────
 
 export interface LeadAdv {
@@ -44,6 +65,9 @@ export interface LeadAdv {
   id_agendamento: string | null
   anotacoes: string | null
   created_at: string
+  area_previdenciaria: AreaPrevidenciaria
+  status_qualificacao: StatusQualificacao
+  respostas_qualificacao: { texto: string } | null
   // Campos Chatwoot: existem no banco mas NUNCA usar no frontend
 }
 
@@ -97,6 +121,7 @@ export interface AgendamentoAdv {
   data_hora_inicio: string
   data_hora_fim: string
   status: AgendamentoStatus
+  modalidade: ModalidadeAtendimento
   observacoes: string | null
   created_at: string
   // Joins
