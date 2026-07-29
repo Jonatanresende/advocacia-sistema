@@ -5,8 +5,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['Playfair Display', 'serif'],
-        sans: ['DM Sans', 'sans-serif'],
+        display: ['Manrope', 'sans-serif'],
+        sans: ['Manrope', 'sans-serif'],
       },
       colors: {
         accent: '#C9A84C',

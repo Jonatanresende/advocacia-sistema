@@ -58,7 +58,7 @@ body {
   margin: 0;
   background-color: var(--bg-base);
   color: var(--text-main);
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Manrope', sans-serif;
   -webkit-font-smoothing: antialiased;
   transition: background-color 0.2s, color 0.2s;
 }
@@ -66,5 +66,5 @@ body {
 h1,
 h2,
 h3 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Manrope', sans-serif;
 }
