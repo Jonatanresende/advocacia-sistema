@@ -5,22 +5,34 @@
 /* Dark mode via classe .dark no <html> */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Core Palette */
+:root {
+  --color-sidebar: #182635;
+  --color-primary: #182230;
+  --color-accent: #B89445;
+  --color-background: #F6F7F9;
+  --color-surface: #FFFFFF;
+  --color-text-primary: #182230;
+  --color-text-secondary: #667085;
+  --color-border: #E4E7EC;
+}
+
 /* Tokens — Light Mode */
 :root {
-  --bg-base: #F8F6F1;
-  --bg-sidebar: #1C2B3A;
-  --bg-card: #FFFFFF;
-  --border-card: #E8E2D9;
-  --primary: #1C2B3A;
+  --bg-base: var(--color-background);
+  --bg-sidebar: var(--color-sidebar);
+  --bg-card: var(--color-surface);
+  --border-card: var(--color-border);
+  --primary: var(--color-primary);
   --primary-hover: #243547;
-  --accent: #C9A84C;
+  --accent: var(--color-accent);
   --accent-light: #FBF5E6;
-  --text-main: #1C2B3A;
-  --text-muted: #7A7060;
+  --text-main: var(--color-text-primary);
+  --text-muted: var(--color-text-secondary);
   --success: #4A7C59;
   --warning: #D4834A;
   --danger: #B94040;
-  --sidebar-text: #FFFFFF;
+  --sidebar-text: var(--color-surface);
   --sidebar-muted: #8BA0B4;
   --sidebar-active: #243547;
   --sidebar-border: #2D3F52;

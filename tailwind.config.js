@@ -9,8 +9,8 @@ export default {
         sans: ['Manrope', 'sans-serif'],
       },
       colors: {
-        accent: '#C9A84C',
-        primary: '#1C2B3A',
+        accent: 'var(--accent)',
+        primary: 'var(--primary)',
       },
       borderRadius: {
         card: '12px',
