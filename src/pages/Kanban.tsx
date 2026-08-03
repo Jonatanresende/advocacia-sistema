@@ -34,6 +34,7 @@ const COLUNAS: { id: LeadStatus; title: string; desc: string }[] = [
   { id: 'novo_contato', title: 'Novo Contato', desc: 'Acabou de entrar' },
   { id: 'conversando', title: 'Conversando', desc: 'Em atendimento' },
   { id: 'consulta_agendada', title: 'Agendada', desc: 'Consulta marcada' },
+  { id: 'confirmado', title: 'Confirmado', desc: 'Presença confirmada' },
   { id: 'compareceu', title: 'Compareceu', desc: 'Virou cliente' },
   { id: 'follow_up', title: 'Follow Up', desc: 'Aguardando' },
   { id: 'fechado', title: 'Fechado', desc: 'Contrato fechado' },
@@ -62,28 +63,25 @@ function SortableItem({ lead }: { lead: LeadAdv }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[12px] p-3.5 shadow-sm hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-shadow cursor-grab active:cursor-grabbing mb-3 group"
+      className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[8px] p-3 shadow-sm cursor-grab active:cursor-grabbing mb-3"
     >
-      <div className="flex justify-between items-start mb-2.5">
-        <span className="font-semibold text-[13px] text-[var(--text-main)] truncate block mr-2 group-hover:text-[var(--accent)] transition-colors">
+      <div className="flex justify-between items-start mb-2">
+        <span className="font-medium text-sm text-[var(--text-main)] truncate block mr-2">
           {lead.nome_lead || lead.whatsapp_lead}
         </span>
         <Badge status={lead.status} />
       </div>
-      <p className="text-[12px] text-[var(--text-muted)] line-clamp-2 mb-3 leading-relaxed">
+      <p className="text-xs text-[var(--text-muted)] line-clamp-2 mb-2">
         {lead.motivo_contato || 'Sem motivo informado'}
       </p>
-      
-      <div className="flex items-center justify-between mt-auto pt-1">
-        {lead.area_previdenciaria && lead.area_previdenciaria !== 'nao_identificada' ? (
-          <span className="inline-block text-[10px] font-medium px-2 py-1 rounded-[6px] bg-[var(--bg-base)] border border-[var(--border-card)] text-[var(--text-muted)]">
-            {areaPrevidenciariaLabels[lead.area_previdenciaria]}
-          </span>
-        ) : <span />}
-        <span className="text-[10px] text-[var(--text-muted)] font-medium bg-[var(--bg-base)] border border-[var(--border-card)] px-1.5 py-0.5 rounded-[6px]">
-          {lead.inicio_atendimento ? format(new Date(lead.inicio_atendimento), 'dd/MM HH:mm') : ''}
+      {lead.area_previdenciaria && lead.area_previdenciaria !== 'nao_identificada' && (
+        <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-[var(--bg-base)] border border-[var(--border-card)] text-[var(--text-muted)] mb-2">
+          {areaPrevidenciariaLabels[lead.area_previdenciaria]}
         </span>
-      </div>
+      )}
+      <span className="text-[10px] text-[var(--text-muted)] block text-right">
+        {lead.inicio_atendimento ? format(new Date(lead.inicio_atendimento), 'dd/MM HH:mm') : ''}
+      </span>
     </div>
   )
 }
@@ -92,26 +90,26 @@ function Column({ id, title, desc, leads }: { id: LeadStatus; title: string; des
   const { setNodeRef } = useSortable({ id: `col-${id}`, data: { type: 'Column', id } })
 
   return (
-    <div className="bg-[var(--bg-base)] rounded-[14px] border border-[var(--border-card)] flex flex-col w-[310px] shrink-0 max-h-full">
-      <div className="p-4 border-b border-[var(--border-card)]">
-        <div className="flex items-center justify-between mb-1.5">
-          <h3 className="font-semibold text-[var(--text-main)] text-[15px] font-display">{title}</h3>
-          <span className="text-[11px] font-semibold text-[var(--text-muted)] bg-[var(--bg-card)] px-2.5 py-1 rounded-[8px] border border-[var(--border-card)]">
+    <div className="bg-[var(--bg-base)] rounded-[12px] border border-[var(--border-card)] flex flex-col w-[300px] shrink-0 max-h-full">
+      <div className="p-3 border-b border-[var(--border-card)]">
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-semibold text-[var(--text-main)] text-sm font-display">{title}</h3>
+          <span className="text-xs font-medium text-[var(--text-muted)] bg-[var(--bg-card)] px-2 py-0.5 rounded-full border border-[var(--border-card)]">
             {leads.length}
           </span>
         </div>
-        <p className="text-[12px] text-[var(--text-muted)]">{desc}</p>
+        <p className="text-[11px] text-[var(--text-muted)]">{desc}</p>
       </div>
 
-      <div className="flex-1 p-3 overflow-y-auto" ref={setNodeRef}>
+      <div className="flex-1 p-2 overflow-y-auto" ref={setNodeRef}>
         <SortableContext items={leads.map(l => l.id)} strategy={verticalListSortingStrategy}>
           {leads.map(lead => (
             <SortableItem key={lead.id} lead={lead} />
           ))}
         </SortableContext>
         {leads.length === 0 && (
-          <div className="min-h-[100px] flex items-center justify-center p-4 border-2 border-dashed border-[var(--border-card)] rounded-[12px] text-[var(--text-muted)] text-[12px] font-medium text-center opacity-70">
-            Arraste um lead para cá
+          <div className="min-h-[80px] flex items-center justify-center p-4 border-2 border-dashed border-[var(--border-card)] rounded-[8px] text-[var(--text-muted)] text-xs text-center">
+            Solte aqui
           </div>
         )}
       </div>
@@ -226,14 +224,14 @@ export default function Kanban() {
 
             <DragOverlay dropAnimation={dropAnimation}>
               {activeLead ? (
-                <div className="bg-[var(--bg-card)] border-[2px] border-[var(--accent)] rounded-[12px] p-3.5 shadow-2xl w-[310px] opacity-90 scale-105">
-                  <div className="flex justify-between items-start mb-2.5">
-                    <span className="font-semibold text-[13px] text-[var(--text-main)] truncate block mr-2">
+                <div className="bg-[var(--bg-card)] border border-[var(--accent)] rounded-[8px] p-3 shadow-xl w-[280px]">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="font-medium text-sm text-[var(--text-main)] truncate block mr-2">
                       {activeLead.nome_lead || activeLead.whatsapp_lead}
                     </span>
                     <Badge status={activeLead.status} />
                   </div>
-                  <p className="text-[12px] text-[var(--text-muted)] line-clamp-2 leading-relaxed">{activeLead.motivo_contato}</p>
+                  <p className="text-xs text-[var(--text-muted)] line-clamp-2">{activeLead.motivo_contato}</p>
                 </div>
               ) : null}
             </DragOverlay>
@@ -242,8 +240,8 @@ export default function Kanban() {
       )}
 
       <Modal isOpen={isModalOpen} onClose={cancelUpdate} title="Promover a Cliente">
-        <p className="text-[var(--text-muted)] text-[14px] mb-6 leading-relaxed">
-          Ao confirmar, este lead será promovido a <strong className="text-[var(--accent)] font-semibold">cliente</strong> automaticamente. Essa ação pode ser revertida movendo o card para outro status.
+        <p className="text-[var(--text-main)] mb-6 leading-relaxed">
+          Ao confirmar, este lead será promovido a <strong>cliente</strong> automaticamente. Essa ação pode ser revertida movendo o card para outro status.
         </p>
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={cancelUpdate} disabled={isUpdating}>Cancelar</Button>
