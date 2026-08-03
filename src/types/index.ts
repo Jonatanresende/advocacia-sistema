@@ -4,6 +4,7 @@ export type LeadStatus =
   | 'novo_contato'
   | 'conversando'
   | 'consulta_agendada'
+  | 'confirmado'
   | 'compareceu'
   | 'follow_up'
   | 'fechado'
