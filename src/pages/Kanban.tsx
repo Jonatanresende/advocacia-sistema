@@ -41,6 +41,15 @@ const COLUNAS: { id: LeadStatus; title: string; desc: string }[] = [
   { id: 'perdido', title: 'Perdido', desc: 'Desistiu' },
 ]
 
+// Dias parado em 'compareceu' sem decisão (fechado/perdido) até disparar o alerta visual
+const DIAS_ALERTA_DECISAO = 5
+
+function diasParadoNoStatus(lead: LeadAdv): number {
+  if (!lead.status_atualizado_em) return 0
+  const diffMs = Date.now() - new Date(lead.status_atualizado_em).getTime()
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24))
+}
+
 function SortableItem({ lead }: { lead: LeadAdv }) {
   const {
     attributes,
@@ -57,13 +66,20 @@ function SortableItem({ lead }: { lead: LeadAdv }) {
     opacity: isDragging ? 0.4 : 1,
   }
 
+  const dias = diasParadoNoStatus(lead)
+  const precisaDecisao = lead.status === 'compareceu' && dias >= DIAS_ALERTA_DECISAO
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       {...attributes}
       {...listeners}
-      className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[8px] p-3 shadow-sm cursor-grab active:cursor-grabbing mb-3"
+      className={`bg-[var(--bg-card)] rounded-[8px] p-3 shadow-sm cursor-grab active:cursor-grabbing mb-3 ${
+        precisaDecisao
+          ? 'border-2 border-red-500 animate-pulse'
+          : 'border border-[var(--border-card)]'
+      }`}
     >
       <div className="flex justify-between items-start mb-2">
         <span className="font-medium text-sm text-[var(--text-main)] truncate block mr-2">
@@ -78,6 +94,11 @@ function SortableItem({ lead }: { lead: LeadAdv }) {
         <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-[var(--bg-base)] border border-[var(--border-card)] text-[var(--text-muted)] mb-2">
           {areaPrevidenciariaLabels[lead.area_previdenciaria]}
         </span>
+      )}
+      {precisaDecisao && (
+        <p className="text-[10px] text-red-500 font-medium mb-1">
+          ⚠️ {dias} dias sem decisão (fechar ou perder)
+        </p>
       )}
       <span className="text-[10px] text-[var(--text-muted)] block text-right">
         {lead.inicio_atendimento ? format(new Date(lead.inicio_atendimento), 'dd/MM HH:mm') : ''}

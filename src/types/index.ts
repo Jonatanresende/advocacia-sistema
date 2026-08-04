@@ -69,6 +69,7 @@ export interface LeadAdv {
   area_previdenciaria: AreaPrevidenciaria
   status_qualificacao: StatusQualificacao
   respostas_qualificacao: { texto: string } | null
+  status_atualizado_em: string
   // Campos Chatwoot: existem no banco mas NUNCA usar no frontend
 }
 
