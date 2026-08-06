@@ -148,3 +148,12 @@ export interface DateFilter {
   startDate: string
   endDate: string
 }
+
+export interface DocumentoLead {
+  id: string
+  lead_id: string
+  url: string
+  tipo: string | null
+  descricao: string | null
+  created_at: string
+}

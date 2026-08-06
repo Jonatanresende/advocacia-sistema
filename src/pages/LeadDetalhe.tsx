@@ -4,8 +4,8 @@ import Card from '../components/ui/Card'
 import Badge, { statusConfig, areaPrevidenciariaLabels } from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import { supabase } from '../lib/supabase'
-import type { LeadAdv, LeadStatus } from '../types'
-import { ArrowLeft, Clock, MessageSquare, Edit3, Calendar, ShieldCheck } from 'lucide-react'
+import type { LeadAdv, LeadStatus, DocumentoLead } from '../types'
+import { ArrowLeft, Clock, MessageSquare, Edit3, Calendar, ShieldCheck, FileText, Image as ImageIcon, Download } from 'lucide-react'
 import { format } from 'date-fns'
 import { useToast } from '../contexts/ToastContext'
 
@@ -18,6 +18,7 @@ export default function LeadDetalhe() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [anotacoes, setAnotacoes] = useState('')
+  const [documentos, setDocumentos] = useState<DocumentoLead[]>([])
 
   const fetchLead = async () => {
     if (!id) return
@@ -35,7 +36,25 @@ export default function LeadDetalhe() {
     }
   }
 
-  useEffect(() => { fetchLead() }, [id])
+  const fetchDocumentos = async () => {
+    if (!id) return
+    try {
+      const { data, error: err } = await supabase
+        .from('documentos_lead')
+        .select('*')
+        .eq('lead_id', id)
+        .order('created_at', { ascending: false })
+      if (err) throw err
+      setDocumentos(data || [])
+    } catch (err) {
+      console.error('Erro ao buscar documentos:', err)
+    }
+  }
+
+  useEffect(() => { 
+    fetchLead()
+    fetchDocumentos()
+  }, [id])
 
   const handleStatusChange = async (newStatus: LeadStatus) => {
     if (!lead) return
@@ -194,6 +213,49 @@ export default function LeadDetalhe() {
               )}
             </div>
           </Card>
+
+          <Card className="flex flex-col gap-4">
+            <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
+              <FileText size={18} className="text-[var(--accent)]" />
+              Documentos Anexados
+            </h3>
+            <div className="flex flex-col gap-3">
+              {documentos.length === 0 ? (
+                <p className="text-sm text-[var(--text-muted)] text-center py-4">Nenhum documento recebido.</p>
+              ) : (
+                documentos.map((doc) => (
+                  <div key={doc.id} className="flex items-start gap-3 p-3 rounded-[8px] bg-[var(--bg-base)] border border-[var(--border-card)]">
+                    <div className="mt-1 text-[var(--accent)]">
+                      {doc.tipo?.toLowerCase().includes('imagem') ? <ImageIcon size={20} /> : <FileText size={20} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-[var(--text-main)] font-medium mb-1">
+                        {doc.tipo
+                          ? doc.tipo
+                              .replace(/_/g, ' ')
+                              .replace(/\b\w/g, (c) => c.toUpperCase())
+                          : doc.url?.toLowerCase().includes('imagem') || doc.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+                            ? 'Imagem'
+                            : 'Documento'}
+                      </p>
+                      <p className="text-xs text-[var(--text-muted)]">
+                        {format(new Date(doc.created_at), 'dd/MM/yyyy HH:mm')}
+                      </p>
+                    </div>
+                    <a
+                      href={doc.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-2 hover:bg-[var(--bg-card)] rounded-full transition-colors text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                      title="Abrir arquivo"
+                    >
+                      <Download size={18} />
+                    </a>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
         </div>
 
         <div className="lg:col-span-1">
@@ -214,6 +276,7 @@ export default function LeadDetalhe() {
               </Button>
             </div>
           </Card>
+
         </div>
       </div>
     </div>
