@@ -21,8 +21,7 @@ export function useFollowUp() {
       const { data, error: err } = await supabase
         .from('leads_adv')
         .select('*')
-        .neq('status', 'consulta_agendada')
-        .neq('status', 'compareceu')
+        .not('status', 'in', '(consulta_agendada,compareceu,confirmado,fechado,perdido)')
         .or(
           `ultima_mensagem.lte.${limiteUltimaMensagem},and(ultima_mensagem.is.null,inicio_atendimento.lte.${limiteUltimaMensagem})`
         )
