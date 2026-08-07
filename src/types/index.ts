@@ -1,5 +1,8 @@
 // ─── ENUMs ────────────────────────────────────────────────────────────────────
 
+export type UserRole = 'admin' | 'advogado' | 'funcionario'
+
+
 export type LeadStatus =
   | 'novo_contato'
   | 'conversando'
@@ -70,6 +73,7 @@ export interface LeadAdv {
   status_qualificacao: StatusQualificacao
   respostas_qualificacao: { texto: string } | null
   status_atualizado_em: string
+  owner_id?: string | null
   // Campos Chatwoot: existem no banco mas NUNCA usar no frontend
 }
 
@@ -126,6 +130,7 @@ export interface AgendamentoAdv {
   modalidade: ModalidadeAtendimento
   observacoes: string | null
   created_at: string
+  owner_id?: string | null
   // Joins
   lead?: LeadAdv
   advogado?: Advogado
@@ -156,4 +161,25 @@ export interface DocumentoLead {
   tipo: string | null
   descricao: string | null
   created_at: string
+}
+
+// ─── MULTI-USUÁRIO ────────────────────────────────────────────────────────────
+
+export interface Perfil {
+  id: string
+  nome: string
+  role: UserRole
+  ativo: boolean
+  avatar_url: string | null
+  telefone: string | null
+  advogado_id: string | null
+  created_at: string
+}
+
+export interface PermissaoRole {
+  id: number
+  role: Exclude<UserRole, 'admin'>
+  rota: string
+  label: string
+  ativo: boolean
 }

@@ -4,21 +4,24 @@ import Card from '../components/ui/Card'
 import Badge, { statusConfig, areaPrevidenciariaLabels } from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import { supabase } from '../lib/supabase'
-import type { LeadAdv, LeadStatus, DocumentoLead } from '../types'
+import type { LeadAdv, LeadStatus, DocumentoLead, Perfil } from '../types'
 import { ArrowLeft, Clock, MessageSquare, Edit3, Calendar, ShieldCheck, FileText, Image as ImageIcon, Download } from 'lucide-react'
 import { format } from 'date-fns'
 import { useToast } from '../contexts/ToastContext'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function LeadDetalhe() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { success, error } = useToast()
+  const { isAdmin, isFuncionario } = useAuth()
 
   const [lead, setLead] = useState<LeadAdv | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [anotacoes, setAnotacoes] = useState('')
   const [documentos, setDocumentos] = useState<DocumentoLead[]>([])
+  const [usuarios, setUsuarios] = useState<Perfil[]>([])
 
   const fetchLead = async () => {
     if (!id) return
@@ -51,9 +54,23 @@ export default function LeadDetalhe() {
     }
   }
 
+  const fetchUsuarios = async () => {
+    try {
+      const { data, error: err } = await supabase
+        .from('perfis')
+        .select('id, nome, role')
+        .eq('ativo', true)
+      if (err) throw err
+      setUsuarios(data as Perfil[])
+    } catch (err) {
+      console.error('Erro ao buscar perfis:', err)
+    }
+  }
+
   useEffect(() => { 
     fetchLead()
     fetchDocumentos()
+    fetchUsuarios()
   }, [id])
 
   const handleStatusChange = async (newStatus: LeadStatus) => {
@@ -66,6 +83,23 @@ export default function LeadDetalhe() {
     } catch (err) {
       console.error(err)
       error('Erro ao atualizar status')
+    }
+  }
+
+  const handleOwnerChange = async (newOwnerId: string) => {
+    if (!lead) return
+    try {
+      const val = newOwnerId === '' ? null : newOwnerId
+      const { error: err } = await supabase
+        .from('leads_adv')
+        .update({ owner_id: val })
+        .eq('id', lead.id)
+      if (err) throw err
+      setLead({ ...lead, owner_id: val })
+      success('Responsável pelo lead atualizado')
+    } catch (err) {
+      console.error(err)
+      error('Erro ao atualizar responsável')
     }
   }
 
@@ -139,6 +173,27 @@ export default function LeadDetalhe() {
               <div>
                 <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Motivo do Contato</p>
                 <p className="font-medium text-[var(--text-main)]">{lead.motivo_contato || 'Não informado'}</p>
+              </div>
+              <div className="sm:col-span-2 border-t border-[var(--border-card)] pt-3 mt-1 flex flex-col gap-1">
+                <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider">Responsável pelo Lead</p>
+                {isAdmin || isFuncionario ? (
+                  <select
+                    value={lead.owner_id || ''}
+                    onChange={(e) => handleOwnerChange(e.target.value)}
+                    className="w-full sm:max-w-xs text-[13px] font-semibold rounded-[8px] px-3 py-2 border border-[var(--border-card)] bg-[var(--bg-base)] text-[var(--text-main)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] cursor-pointer"
+                  >
+                    <option value="">Sem responsável (Fila Geral)</option>
+                    {usuarios.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.nome} ({u.role === 'admin' ? 'Admin' : u.role === 'advogado' ? 'Advogado' : 'Funcionário'})
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="font-semibold text-[13px] text-[var(--text-main)]">
+                    {usuarios.find((u) => u.id === lead.owner_id)?.nome || 'Sem responsável'}
+                  </p>
+                )}
               </div>
               <div className="sm:col-span-2">
                 <p className="text-xs text-[var(--text-muted)] uppercase tracking-wider mb-1">Resumo da Conversa (Agente IA)</p>

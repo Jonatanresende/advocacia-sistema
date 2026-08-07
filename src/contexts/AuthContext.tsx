@@ -7,29 +7,72 @@ import {
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import type { Perfil, UserRole } from '../types'
 
 interface AuthContextType {
   session: Session | null
   user: User | null
+  perfil: Perfil | null
+  role: UserRole | null
   isLoading: boolean
   isAdmin: boolean
+  isAdvogado: boolean
+  isFuncionario: boolean
+  permissoes: string[]
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-function hasAdminRole(user: User | null): boolean {
-  if (!user) return false
-  const appRole = user.app_metadata?.role
-  const userRole = user.user_metadata?.role
-  return appRole === 'admin' || userRole === 'admin'
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
+  const [perfil, setPerfil] = useState<Perfil | null>(null)
+  const [permissoes, setPermissoes] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
+
+  const loadUserData = async (currentUser: User | null) => {
+    if (!currentUser) {
+      setPerfil(null)
+      setPermissoes([])
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      // Load perfil
+      const { data: perfilData, error: perfilError } = await supabase
+        .from('perfis')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single()
+
+      if (perfilError) throw perfilError
+      const currentPerfil = perfilData as Perfil
+      setPerfil(currentPerfil)
+
+      // Load permissoes se não for admin
+      if (currentPerfil.role !== 'admin') {
+        const { data: permData, error: permError } = await supabase
+          .from('permissoes_role')
+          .select('rota')
+          .eq('role', currentPerfil.role)
+          .eq('ativo', true)
+        
+        if (permError) throw permError
+        setPermissoes(permData.map(p => p.rota))
+      } else {
+        setPermissoes([]) // Admin tem acesso a tudo
+      }
+    } catch (err) {
+      console.error('Erro ao carregar dados do usuário:', err)
+      setPerfil(null)
+      setPermissoes([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
     let mounted = true
@@ -38,13 +81,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return
       setSession(data.session)
       setUser(data.session?.user ?? null)
-      setIsLoading(false)
+      if (data.session?.user) {
+        loadUserData(data.session.user)
+      } else {
+        setIsLoading(false)
+      }
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!mounted) return
       setSession(nextSession)
       setUser(nextSession?.user ?? null)
-      setIsLoading(false)
+      
+      if (nextSession?.user) {
+        setIsLoading(true)
+        loadUserData(nextSession.user)
+      } else {
+        setPerfil(null)
+        setPermissoes([])
+        setIsLoading(false)
+      }
     })
 
     return () => {
@@ -68,13 +124,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
   }
 
+  const role = perfil?.role ?? null
+  const isAdmin = role === 'admin'
+  const isAdvogado = role === 'advogado'
+  const isFuncionario = role === 'funcionario'
+
   return (
     <AuthContext.Provider
       value={{
         session,
         user,
+        perfil,
+        role,
         isLoading,
-        isAdmin: hasAdminRole(user),
+        isAdmin,
+        isAdvogado,
+        isFuncionario,
+        permissoes,
         signIn,
         signOut,
       }}

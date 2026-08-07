@@ -4,9 +4,9 @@ import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
 import { supabase } from '../lib/supabase'
-import type { OfficeConfig, OfficeHours, DiaSemana } from '../types'
+import type { OfficeConfig, OfficeHours, DiaSemana, PermissaoRole } from '../types'
 import { useToast } from '../contexts/ToastContext'
-import { Building2, Clock } from 'lucide-react'
+import { Building2, Clock, Shield } from 'lucide-react'
 import clsx from 'clsx'
 
 const DIAS_ORDEM: DiaSemana[] = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
@@ -16,20 +16,24 @@ export default function Configuracoes() {
 
   const [config, setConfig] = useState<OfficeConfig | null>(null)
   const [hours, setHours] = useState<Partial<Record<DiaSemana, OfficeHours>>>({})
+  const [permissions, setPermissions] = useState<PermissaoRole[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSavingConfig, setIsSavingConfig] = useState(false)
   const [isSavingHours, setIsSavingHours] = useState(false)
+  const [isSavingPermissions, setIsSavingPermissions] = useState(false)
 
   const fetchData = async () => {
     setIsLoading(true)
     try {
-      const [configRes, hoursRes] = await Promise.all([
+      const [configRes, hoursRes, permissionsRes] = await Promise.all([
         supabase.from('office_config').select('*').eq('id', 1).maybeSingle(),
-        supabase.from('office_hours').select('*')
+        supabase.from('office_hours').select('*'),
+        supabase.from('permissoes_role').select('*')
       ])
 
       if (configRes.error) throw configRes.error
       if (hoursRes.error) throw hoursRes.error
+      if (permissionsRes.error) throw permissionsRes.error
 
       setConfig((configRes.data as OfficeConfig | null) ?? {
         id: 1,
@@ -42,6 +46,8 @@ export default function Configuracoes() {
       const hoursMap: Partial<Record<DiaSemana, OfficeHours>> = {}
       ;(hoursRes.data as OfficeHours[]).forEach(h => { hoursMap[h.dia] = h })
       setHours(hoursMap)
+
+      setPermissions((permissionsRes.data as PermissaoRole[]) || [])
     } catch (err) {
       console.error(err)
       error('Erro ao carregar configurações')
@@ -57,6 +63,10 @@ export default function Configuracoes() {
       ...prev,
       [dia]: { ...prev[dia], [field]: value }
     }))
+  }
+
+  const handlePermissionChange = (id: number, checked: boolean) => {
+    setPermissions(prev => prev.map(p => p.id === id ? { ...p, ativo: checked } : p))
   }
 
   const saveConfig = async () => {
@@ -98,8 +108,35 @@ export default function Configuracoes() {
     }
   }
 
+  const savePermissions = async () => {
+    setIsSavingPermissions(true)
+    try {
+      const updates = permissions.map(p => ({
+        id: p.id,
+        role: p.role,
+        rota: p.rota,
+        label: p.label,
+        ativo: p.ativo
+      }))
+      const { error: err } = await supabase.from('permissoes_role').upsert(updates)
+      if (err) throw err
+      success('Permissões de acesso salvas com sucesso!')
+    } catch (err) {
+      console.error(err)
+      error('Erro ao salvar permissões')
+    } finally {
+      setIsSavingPermissions(false)
+    }
+  }
+
   if (isLoading) {
     return <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div></div>
+  }
+
+  // Agrupar permissões por rota para exibição mais limpa
+  const rotasUnicas = Array.from(new Set(permissions.map(p => p.rota)))
+  const getPermissionObject = (rota: string, role: 'advogado' | 'funcionario') => {
+    return permissions.find(p => p.rota === rota && p.role === role)
   }
 
   return (
@@ -143,7 +180,82 @@ export default function Configuracoes() {
           )}
         </Card>
 
-        {/* Seção 2 */}
+        {/* Seção 2 - Permissões de Acesso */}
+        <Card className="flex flex-col gap-6 shadow-none !border-[var(--border-card)] rounded-[14px] p-6">
+          <h3 className="font-semibold text-[16px] text-[var(--text-main)] font-display flex items-center gap-2.5 border-b border-[var(--border-card)] pb-4">
+            <Shield size={18} className="text-[var(--accent)]" />
+            Permissões de Acesso
+          </h3>
+          <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
+            Configure quais páginas cada papel (Advogado e Funcionário) possui acesso padrão ao logar no CRM.
+            Apenas administradores podem gerenciar essas permissões.
+          </p>
+
+          <div className="flex flex-col gap-3">
+            <div className="hidden sm:grid grid-cols-12 gap-4 px-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">
+              <div className="col-span-6">Página / Rota</div>
+              <div className="col-span-3 text-center">Advogado</div>
+              <div className="col-span-3 text-center">Funcionário</div>
+            </div>
+
+            {rotasUnicas.map(rota => {
+              const permAdv = getPermissionObject(rota, 'advogado')
+              const permFunc = getPermissionObject(rota, 'funcionario')
+              const label = permAdv?.label || permFunc?.label || rota
+
+              return (
+                <div key={rota} className="flex flex-col sm:grid sm:grid-cols-12 gap-4 items-center bg-[var(--bg-base)]/50 p-4 rounded-[12px] border border-[var(--border-card)] hover:bg-[var(--bg-base)] transition-colors">
+                  <div className="col-span-6 w-full flex flex-col">
+                    <span className="font-semibold text-[13px] text-[var(--text-main)]">{label}</span>
+                    <span className="text-[11px] text-[var(--text-muted)]">{rota}</span>
+                  </div>
+                  
+                  {/* Toggle Advogado */}
+                  <div className="col-span-3 w-full flex items-center justify-center">
+                    {permAdv && (
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={permAdv.ativo}
+                          onChange={(e) => handlePermissionChange(permAdv.id, e.target.checked)}
+                        />
+                        <div className={clsx(
+                          "w-11 h-6 rounded-full relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--border-card)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white",
+                          permAdv.ativo ? "bg-[var(--accent)]" : "bg-[var(--border-card)]"
+                        )}></div>
+                      </label>
+                    )}
+                  </div>
+
+                  {/* Toggle Funcionário */}
+                  <div className="col-span-3 w-full flex items-center justify-center">
+                    {permFunc && (
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input
+                          type="checkbox"
+                          className="sr-only peer"
+                          checked={permFunc.ativo}
+                          onChange={(e) => handlePermissionChange(permFunc.id, e.target.checked)}
+                        />
+                        <div className={clsx(
+                          "w-11 h-6 rounded-full relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--border-card)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white",
+                          permFunc.ativo ? "bg-[var(--accent)]" : "bg-[var(--border-card)]"
+                        )}></div>
+                      </label>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+
+            <div className="pt-4 flex justify-end">
+              <Button onClick={savePermissions} isLoading={isSavingPermissions}>Salvar Permissões</Button>
+            </div>
+          </div>
+        </Card>
+
+        {/* Seção 3 */}
         <Card className="flex flex-col gap-6 shadow-none !border-[var(--border-card)] rounded-[14px] p-6">
           <h3 className="font-semibold text-[16px] text-[var(--text-main)] font-display flex items-center gap-2.5 border-b border-[var(--border-card)] pb-4">
             <Clock size={18} className="text-[var(--accent)]" />
@@ -204,3 +316,4 @@ export default function Configuracoes() {
     </div>
   )
 }
+
