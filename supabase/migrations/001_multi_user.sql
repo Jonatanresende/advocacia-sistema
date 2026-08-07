@@ -4,14 +4,6 @@
 -- ============================================================
 
 -- ────────────────────────────────────────────────────────────
--- 0. LIMPAR DADOS DE TESTE
--- ────────────────────────────────────────────────────────────
-TRUNCATE TABLE agendamentos_adv RESTART IDENTITY CASCADE;
-TRUNCATE TABLE clientes_adv RESTART IDENTITY CASCADE;
-TRUNCATE TABLE leads_adv RESTART IDENTITY CASCADE;
-
-
--- ────────────────────────────────────────────────────────────
 -- 1. TABELA PERFIS
 -- ────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS perfis (
