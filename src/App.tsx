@@ -3,7 +3,7 @@ import { ThemeProvider } from './contexts/ThemeContext'
 import { ToastProvider } from './contexts/ToastContext'
 import { AuthProvider } from './contexts/AuthContext'
 import Layout from './components/layout/Layout'
-import ProtectedRoute, { AdminRoute } from './components/auth/ProtectedRoute'
+import ProtectedRoute, { AdminRoute, RestrictedRoute } from './components/auth/ProtectedRoute'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Kanban from './pages/Kanban'
@@ -30,14 +30,28 @@ export default function App() {
               
               <Route element={<ProtectedRoute />}>
                 <Route element={<Layout />}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/kanban" element={<Kanban />} />
-                  <Route path="/leads" element={<Leads />} />
-                  <Route path="/leads/:id" element={<LeadDetalhe />} />
-                  <Route path="/clientes" element={<Clientes />} />
-                  <Route path="/clientes/:id" element={<ClienteDetalhe />} />
-                  <Route path="/follow-up" element={<FollowUp />} />
-                  <Route path="/agendamentos" element={<Agendamentos />} />
+                  <Route element={<RestrictedRoute rota="/dashboard" />}>
+                    <Route path="/dashboard" element={<Dashboard />} />
+                  </Route>
+                  <Route element={<RestrictedRoute rota="/kanban" />}>
+                    <Route path="/kanban" element={<Kanban />} />
+                  </Route>
+                  <Route element={<RestrictedRoute rota="/leads" />}>
+                    <Route path="/leads" element={<Leads />} />
+                    <Route path="/leads/:id" element={<LeadDetalhe />} />
+                  </Route>
+                  <Route element={<RestrictedRoute rota="/clientes" />}>
+                    <Route path="/clientes" element={<Clientes />} />
+                    <Route path="/clientes/:id" element={<ClienteDetalhe />} />
+                  </Route>
+                  <Route element={<RestrictedRoute rota="/follow-up" />}>
+                    <Route path="/follow-up" element={<FollowUp />} />
+                  </Route>
+                  <Route element={<RestrictedRoute rota="/agendamentos" />}>
+                    <Route path="/agendamentos" element={<Agendamentos />} />
+                  </Route>
+
+                  {/* Sempre acessível a qualquer usuário logado, independente do papel */}
                   <Route path="/meu-perfil" element={<MeuPerfil />} />
                   
                   {/* Admin Only Routes */}
