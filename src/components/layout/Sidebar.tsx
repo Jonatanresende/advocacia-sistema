@@ -3,6 +3,7 @@ import {
   Scale,
   LayoutDashboard,
   Kanban,
+  MessageSquare,
   Users,
   UserCheck,
   Bell,
@@ -21,6 +22,7 @@ import { useAuth } from '../../contexts/AuthContext'
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/kanban', icon: Kanban, label: 'Kanban' },
+  { to: '/chat', icon: MessageSquare, label: 'Chat' },
   { to: '/leads', icon: Users, label: 'Leads' },
   { to: '/clientes', icon: UserCheck, label: 'Clientes' },
   { to: '/follow-up', icon: Bell, label: 'Follow Up' },

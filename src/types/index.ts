@@ -74,6 +74,9 @@ export interface LeadAdv {
   respostas_qualificacao: { texto: string } | null
   status_atualizado_em: string
   owner_id?: string | null
+  atendimento_humano_ativo: boolean
+  atendido_por: string | null
+  atendimento_humano_desde: string | null
   // Campos Chatwoot: existem no banco mas NUNCA usar no frontend
 }
 

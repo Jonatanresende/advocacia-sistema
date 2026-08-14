@@ -7,6 +7,7 @@ import ProtectedRoute, { AdminRoute, RestrictedRoute } from './components/auth/P
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Kanban from './pages/Kanban'
+import Chat from './pages/Chat'
 import Leads from './pages/Leads'
 import LeadDetalhe from './pages/LeadDetalhe'
 import Clientes from './pages/Clientes'
@@ -35,6 +36,9 @@ export default function App() {
                   </Route>
                   <Route element={<RestrictedRoute rota="/kanban" />}>
                     <Route path="/kanban" element={<Kanban />} />
+                  </Route>
+                  <Route element={<RestrictedRoute rota="/chat" />}>
+                    <Route path="/chat" element={<Chat />} />
                   </Route>
                   <Route element={<RestrictedRoute rota="/leads" />}>
                     <Route path="/leads" element={<Leads />} />
