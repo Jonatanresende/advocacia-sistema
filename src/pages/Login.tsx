@@ -49,10 +49,10 @@ export default function Login() {
     <div className="min-h-screen flex bg-[var(--bg-base)]">
 
       {/* ── Painel hero (esquerdo) ─────────────────────────────── */}
-      <div className="hidden lg:flex lg:w-[45%] flex-col justify-between bg-[var(--bg-sidebar)] px-14 py-14 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[45%] flex-col justify-between bg-[var(--bg-sidebar)] px-14 py-14 relative overflow-hidden border-r border-[var(--sidebar-border)]">
         {/* Gradients decorativos */}
         <div
-          className="absolute inset-0 opacity-[0.12] pointer-events-none"
+          className="absolute inset-0 opacity-[0.08] dark:opacity-[0.12] pointer-events-none"
           style={{
             backgroundImage:
               'radial-gradient(circle at 15% 25%, var(--brand) 0%, transparent 50%), radial-gradient(circle at 85% 75%, #3B82F6 0%, transparent 45%)',
@@ -65,17 +65,17 @@ export default function Login() {
             <Scale className="text-[var(--brand)]" size={20} />
           </div>
           <div className="flex flex-col leading-tight">
-            <span className="text-white text-[13.5px] font-bold tracking-tight">Angélica Tabosa</span>
-            <span className="text-white/40 text-[10px] uppercase tracking-widest font-semibold">Advocacia Previdenciária</span>
+            <span className="text-[var(--text-main)] text-[13.5px] font-bold tracking-tight">Angélica Tabosa</span>
+            <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-widest font-semibold">Advocacia Previdenciária</span>
           </div>
         </div>
 
         {/* Hero copy */}
         <div className="relative z-10 max-w-sm">
-          <h1 className="font-display text-[40px] font-extrabold leading-[1.1] text-white mb-5 tracking-tight">
+          <h1 className="font-display text-[40px] font-extrabold leading-[1.1] text-[var(--text-main)] mb-5 tracking-tight">
             Gestão completa do seu escritório
           </h1>
-          <p className="text-white/50 text-[15px] leading-relaxed mb-8">
+          <p className="text-[var(--text-muted)] text-[15px] leading-relaxed mb-8">
             Leads, clientes, agendamentos e automações com IA — tudo em um só lugar.
           </p>
 
@@ -90,14 +90,14 @@ export default function Login() {
                 <div className="w-4 h-4 rounded-full bg-[var(--brand)]/20 flex items-center justify-center shrink-0">
                   <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />
                 </div>
-                <span className="text-white/60 text-[13px]">{feat}</span>
+                <span className="text-[var(--text-muted)] text-[13px] font-medium">{feat}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Rodapé */}
-        <div className="relative z-10 flex items-center gap-2 text-white/25 text-[11px]">
+        <div className="relative z-10 flex items-center gap-2 text-[var(--text-muted)] opacity-80 text-[11px]">
           <ShieldCheck size={13} />
           <span>Acesso restrito a usuários autorizados</span>
         </div>
