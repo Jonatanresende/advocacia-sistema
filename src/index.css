@@ -5,61 +5,127 @@
 /* Dark mode via classe .dark no <html> */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Core Palette */
+/* ─── Light Mode ────────────────────────────────────────────────── */
 :root {
-  --color-sidebar: #182635;
-  --color-primary: #182230;
-  --color-accent: #B89445;
-  --color-background: #F6F7F9;
-  --color-surface: #FFFFFF;
-  --color-text-primary: #182230;
-  --color-text-secondary: #667085;
-  --color-border: #E4E7EC;
+  /* Brand identity (ouro do escritório) — uso moderado */
+  --brand:             #B5873D;
+  --brand-hover:       #A07834;
+  --brand-light:       #FBF4E8;
+
+  /* Primary action (azul-ardósia — botões, links, foco) */
+  --primary:           #1E3A5F;
+  --primary-hover:     #16304F;
+  --primary-light:     #EEF4FF;
+
+  /* Semântica */
+  --success:           #15803D;
+  --success-bg:        #F0FDF4;
+  --success-border:    #BBF7D0;
+  --success-text:      #166534;
+
+  --warning:           #B45309;
+  --warning-bg:        #FFFBEB;
+  --warning-border:    #FDE68A;
+  --warning-text:      #92400E;
+
+  --danger:            #B91C1C;
+  --danger-bg:         #FEF2F2;
+  --danger-border:     #FECACA;
+  --danger-text:       #991B1B;
+
+  /* Superfícies */
+  --bg-base:           #F1F4F8;
+  --bg-card:           #FFFFFF;
+  --bg-sidebar:        var(--bg-card);
+
+  /* Bordas */
+  --border-card:       #E2E8F0;
+
+  /* Texto */
+  --text-main:         #111827;
+  --text-muted:        #64748B;
+
+  /* Sombras */
+  --shadow-card:       0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-modal:      0 20px 60px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.08);
+  --shadow-elevated:   0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+
+  /* Sidebar */
+  --sidebar-text:      var(--text-main);
+  --sidebar-muted:     var(--text-muted);
+  --sidebar-active-bg: var(--primary-light);
+  --sidebar-active-text: var(--primary);
+  --sidebar-hover-bg:  var(--bg-base);
+  --sidebar-border:    var(--border-card);
+  --sidebar-section:   var(--text-muted);
+
+  /* Aliases mantidos para compatibilidade com componentes existentes */
+  --accent:            var(--brand);
+  --accent-light:      var(--brand-light);
+  --primary-hover-compat: var(--primary-hover);
 }
 
-/* Tokens — Light Mode */
-:root {
-  --bg-base: var(--color-background);
-  --bg-sidebar: var(--color-sidebar);
-  --bg-card: var(--color-surface);
-  --border-card: var(--color-border);
-  --primary: var(--color-primary);
-  --primary-hover: #243547;
-  --accent: var(--color-accent);
-  --accent-light: #FBF5E6;
-  --text-main: var(--color-text-primary);
-  --text-muted: var(--color-text-secondary);
-  --success: #4A7C59;
-  --warning: #D4834A;
-  --danger: #B94040;
-  --sidebar-text: var(--color-surface);
-  --sidebar-muted: #8BA0B4;
-  --sidebar-active: #243547;
-  --sidebar-border: #2D3F52;
-}
-
-/* Tokens — Dark Mode */
+/* ─── Dark Mode ─────────────────────────────────────────────────── */
 .dark {
-  --bg-base: #111820;
-  --bg-sidebar: #0D1520;
-  --bg-card: #1A2535;
-  --border-card: #253040;
-  --primary: #C9A84C;
-  --primary-hover: #D4B86A;
-  --accent: #C9A84C;
-  --accent-light: #2A2215;
-  --text-main: #EAE4D8;
-  --text-muted: #8A9AAA;
-  --success: #4A7C59;
-  --warning: #D4834A;
-  --danger: #B94040;
-  --sidebar-text: #EAE4D8;
-  --sidebar-muted: #5A7090;
-  --sidebar-active: #1A2535;
-  --sidebar-border: #1A2535;
+  /* Brand */
+  --brand:             #C9A84C;
+  --brand-hover:       #D4B86A;
+  --brand-light:       #251D0C;
+
+  /* Primary action */
+  --primary:           #3B82F6;
+  --primary-hover:     #2563EB;
+  --primary-light:     #0F1E3D;
+
+  /* Semântica */
+  --success:           #3FB950;
+  --success-bg:        #0D2818;
+  --success-border:    #1F6535;
+  --success-text:      #4ADE80;
+
+  --warning:           #E3A008;
+  --warning-bg:        #211900;
+  --warning-border:    #78500A;
+  --warning-text:      #FCD34D;
+
+  --danger:            #F85149;
+  --danger-bg:         #210D0D;
+  --danger-border:     #6B2020;
+  --danger-text:       #FC8181;
+
+  /* Superfícies */
+  --bg-base:           #0D1420;
+  --bg-card:           #152030;
+  --bg-sidebar:        #09111D;
+
+  /* Bordas */
+  --border-card:       #1E2D42;
+
+  /* Texto */
+  --text-main:         #E2E8F0;
+  --text-muted:        #7F93A8;
+
+  /* Sombras (mais sutis em dark — usar fundo mais escuro como elevação) */
+  --shadow-card:       0 1px 4px rgba(0,0,0,0.3);
+  --shadow-modal:      0 24px 64px rgba(0,0,0,0.5);
+  --shadow-elevated:   0 4px 20px rgba(0,0,0,0.4);
+
+  /* Sidebar */
+  --sidebar-text:      #CBD5E1;
+  --sidebar-muted:     #475569;
+  --sidebar-active-bg: rgba(255,255,255,0.06);
+  --sidebar-active-text: #FFFFFF;
+  --sidebar-hover-bg:  rgba(255,255,255,0.03);
+  --sidebar-border:    rgba(255,255,255,0.05);
+  --sidebar-section:   #334155;
+
+  /* Aliases */
+  --accent:            var(--brand);
+  --accent-light:      var(--brand-light);
+  --primary-hover-compat: var(--primary-hover);
 }
 
-/* Base */
+/* ─── Base ──────────────────────────────────────────────────────── */
 html,
 body,
 #root {
@@ -72,11 +138,47 @@ body {
   color: var(--text-main);
   font-family: 'Manrope', sans-serif;
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.2s, color 0.2s;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-h1,
-h2,
-h3 {
+h1, h2, h3, h4 {
   font-family: 'Manrope', sans-serif;
 }
+
+/* ─── Scrollbar customizada ────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-card);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* ─── Animações de UI ───────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+
+.animate-fadeIn     { animation: fadeIn     0.15s ease both; }
+.animate-slideInLeft{ animation: slideInLeft 0.25s cubic-bezier(0.4,0,0.2,1) both; }
+.animate-scaleIn    { animation: scaleIn    0.2s  cubic-bezier(0.4,0,0.2,1) both; }

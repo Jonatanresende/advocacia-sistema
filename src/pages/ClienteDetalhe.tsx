@@ -67,7 +67,7 @@ export default function ClienteDetalhe() {
   }
 
   if (isLoading) {
-    return <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div></div>
+    return <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]"></div></div>
   }
 
   if (!cliente || !cliente.lead) {
@@ -94,7 +94,7 @@ export default function ClienteDetalhe() {
           <select
             value={lead.status}
             onChange={(e) => handleStatusChange(e.target.value as LeadStatus)}
-            className="text-sm font-medium rounded-full px-3 py-1 border cursor-pointer bg-[var(--bg-card)] text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            className="text-sm font-medium rounded-full px-3 py-1 border cursor-pointer bg-[var(--bg-card)] text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
             style={{
               backgroundColor: statusConfig[lead.status]?.bg,
               color: statusConfig[lead.status]?.text,
@@ -104,7 +104,7 @@ export default function ClienteDetalhe() {
             {Object.entries(statusConfig)
               .filter(([k]) => !['agendado', 'confirmado', 'faltou', 'cancelado'].includes(k))
               .map(([key, cfg]) => (
-                <option key={key} value={key} style={{ background: '#fff', color: '#000' }}>
+                <option key={key} value={key} style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>
                   {cfg.label}
                 </option>
               ))}
@@ -116,7 +116,7 @@ export default function ClienteDetalhe() {
         <div className="lg:col-span-2 flex flex-col gap-6">
           <Card className="flex flex-col gap-4">
             <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
-              <MessageSquare size={18} className="text-[var(--accent)]" />
+              <MessageSquare size={18} className="text-[var(--primary)]" />
               Resumo do Contato
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
@@ -139,7 +139,7 @@ export default function ClienteDetalhe() {
 
           <Card className="flex flex-col gap-4">
             <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
-              <Clock size={18} className="text-[var(--accent)]" />
+              <Clock size={18} className="text-[var(--primary)]" />
               Linha do Tempo
             </h3>
             <div className="space-y-4 text-sm">
@@ -162,7 +162,7 @@ export default function ClienteDetalhe() {
         <div className="lg:col-span-1">
           <Card className="h-full flex flex-col gap-4">
             <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
-              <Edit3 size={18} className="text-[var(--accent)]" />
+              <Edit3 size={18} className="text-[var(--primary)]" />
               Anotações Internas
             </h3>
             <div className="flex-1 flex flex-col min-h-[300px]">
@@ -170,7 +170,7 @@ export default function ClienteDetalhe() {
                 value={anotacoes}
                 onChange={(e) => setAnotacoes(e.target.value)}
                 placeholder="Adicione notas visíveis apenas para a equipe do escritório..."
-                className="flex-1 w-full bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[8px] p-3 text-sm text-[var(--text-main)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent)] mb-4"
+                className="flex-1 w-full bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[8px] p-3 text-sm text-[var(--text-main)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--primary)] mb-4"
               />
               <Button onClick={handleSaveAnotacoes} isLoading={isSaving} className="w-full">
                 Salvar Anotações

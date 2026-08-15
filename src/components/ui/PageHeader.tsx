@@ -5,10 +5,12 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, description }: PageHeaderProps) {
   return (
-    <div className="mb-8">
-      <h1 className="text-[28px] font-bold font-display text-[var(--text-main)] mb-2">{title}</h1>
+    <div className="mb-6 pb-5 border-b border-[var(--border-card)]">
+      <h1 className="text-[28px] font-extrabold font-display text-[var(--text-main)] leading-tight tracking-tight mb-1">
+        {title}
+      </h1>
       {description && (
-        <p className="text-sm text-[var(--text-muted)] max-w-3xl">
+        <p className="text-[13.5px] text-[var(--text-muted)] max-w-2xl leading-relaxed">
           {description}
         </p>
       )}

@@ -8,13 +8,13 @@ interface FilterBarProps {
 }
 
 const presets: { id: FilterPreset; label: string }[] = [
-  { id: 'hoje', label: 'Hoje' },
-  { id: 'ontem', label: 'Ontem' },
-  { id: 'ultimos_7_dias', label: 'Últimos 7 dias' },
-  { id: 'ultimos_14_dias', label: 'Últimos 14 dias' },
-  { id: 'este_mes', label: 'Este mês' },
-  { id: 'mes_passado', label: 'Mês passado' },
-  { id: 'este_ano', label: 'Este ano' },
+  { id: 'hoje',           label: 'Hoje' },
+  { id: 'ontem',          label: 'Ontem' },
+  { id: 'ultimos_7_dias', label: 'Últ. 7 dias' },
+  { id: 'ultimos_14_dias',label: 'Últ. 14 dias' },
+  { id: 'este_mes',       label: 'Este mês' },
+  { id: 'mes_passado',    label: 'Mês passado' },
+  { id: 'este_ano',       label: 'Este ano' },
 ]
 
 export default function FilterBar({ filter, onChange }: FilterBarProps) {
@@ -23,7 +23,7 @@ export default function FilterBar({ filter, onChange }: FilterBarProps) {
   }
 
   return (
-    <div className="flex flex-wrap gap-2 mb-6 items-center p-2 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[12px] shadow-sm">
+    <div className="flex flex-wrap gap-1.5 mb-5 items-center">
       {presets.map((preset) => {
         const isActive = filter.preset === preset.id
         return (
@@ -31,10 +31,10 @@ export default function FilterBar({ filter, onChange }: FilterBarProps) {
             key={preset.id}
             onClick={() => handlePresetClick(preset.id)}
             className={clsx(
-              'px-3 py-1.5 text-sm font-medium rounded-[8px] transition-colors',
+              'px-3 py-1.5 text-[13px] font-medium rounded-[8px] transition-all duration-150',
               isActive
-                ? 'bg-[var(--accent)] text-white'
-                : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)] hover:text-[var(--text-main)]'
+                ? 'bg-[var(--primary)] text-white shadow-sm'
+                : 'text-[var(--text-muted)] hover:bg-[var(--bg-card)] hover:text-[var(--text-main)] border border-transparent hover:border-[var(--border-card)]'
             )}
           >
             {preset.label}
@@ -42,18 +42,18 @@ export default function FilterBar({ filter, onChange }: FilterBarProps) {
         )
       })}
 
-      <div className="h-6 w-px bg-[var(--border-card)] mx-2 hidden sm:block" />
+      <div className="h-5 w-px bg-[var(--border-card)] mx-1 hidden sm:block" />
 
       <button
         onClick={() => handlePresetClick('personalizado')}
         className={clsx(
-          'inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-[8px] transition-colors',
+          'inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-[8px] transition-all duration-150',
           filter.preset === 'personalizado'
-            ? 'bg-[var(--accent)] text-white'
-            : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)] hover:text-[var(--text-main)]'
+            ? 'bg-[var(--primary)] text-white shadow-sm'
+            : 'text-[var(--text-muted)] hover:bg-[var(--bg-card)] hover:text-[var(--text-main)] border border-transparent hover:border-[var(--border-card)]'
         )}
       >
-        <CalendarDays size={16} />
+        <CalendarDays size={14} />
         Personalizado
       </button>
     </div>

@@ -9,23 +9,30 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[var(--bg-base)]">
+      {/* Sidebar — desktop */}
       <Sidebar className="hidden md:flex" />
 
+      {/* Gaveta mobile */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 flex md:hidden">
+        <div className="fixed inset-0 z-50 flex md:hidden animate-fadeIn">
+          {/* Overlay */}
           <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
             onClick={() => setIsMobileMenuOpen(false)}
           />
-          <div className="relative z-10 h-full shadow-2xl">
+
+          {/* Painel da gaveta */}
+          <div className="relative z-10 h-full flex flex-col animate-slideInLeft">
+            {/* Botão fechar */}
             <button
               type="button"
               aria-label="Fechar menu"
-              className="absolute top-4 -right-10 p-2 bg-[var(--bg-sidebar)] text-white rounded-r-md"
+              className="absolute top-4 -right-10 p-2 bg-[var(--bg-sidebar)] text-white rounded-r-[8px] border border-[var(--sidebar-border)] border-l-0"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <X size={20} />
+              <X size={18} />
             </button>
+
             <Sidebar
               className="flex border-r-0"
               onNavigate={() => setIsMobileMenuOpen(false)}
@@ -34,6 +41,7 @@ export default function Layout() {
         </div>
       )}
 
+      {/* Área principal */}
       <div className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden">
         <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
 

@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { Scale, Eye, EyeOff } from 'lucide-react'
+import { Scale, Eye, EyeOff, ShieldCheck } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import Input from '../components/ui/Input'
 import Button from '../components/ui/Button'
@@ -20,7 +20,7 @@ export default function Login() {
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[var(--bg-base)]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]" />
       </div>
     )
   }
@@ -47,47 +47,87 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex bg-[var(--bg-base)]">
-      <div className="hidden lg:flex lg:w-[42%] flex-col justify-between bg-[var(--bg-sidebar)] px-12 py-14 relative overflow-hidden">
+
+      {/* ── Painel hero (esquerdo) ─────────────────────────────── */}
+      <div className="hidden lg:flex lg:w-[45%] flex-col justify-between bg-[var(--bg-sidebar)] px-14 py-14 relative overflow-hidden">
+        {/* Gradients decorativos */}
         <div
-          className="absolute inset-0 opacity-[0.07]"
+          className="absolute inset-0 opacity-[0.12] pointer-events-none"
           style={{
             backgroundImage:
-              'radial-gradient(circle at 20% 20%, #C9A84C 0%, transparent 45%), radial-gradient(circle at 80% 80%, #C9A84C 0%, transparent 40%)',
+              'radial-gradient(circle at 15% 25%, var(--brand) 0%, transparent 50%), radial-gradient(circle at 85% 75%, #3B82F6 0%, transparent 45%)',
           }}
         />
+
+        {/* Logotipo */}
         <div className="relative z-10 flex items-center gap-3">
-          <Scale className="text-[var(--accent)]" size={28} />
-          <span className="text-[var(--sidebar-text)] font-display text-sm font-semibold tracking-wide uppercase">
-            Escritório de Advocacia
-          </span>
+          <div className="w-10 h-10 rounded-[10px] bg-[var(--brand)]/20 flex items-center justify-center">
+            <Scale className="text-[var(--brand)]" size={20} />
+          </div>
+          <div className="flex flex-col leading-tight">
+            <span className="text-white text-[13.5px] font-bold tracking-tight">Angélica Tabosa</span>
+            <span className="text-white/40 text-[10px] uppercase tracking-widest font-semibold">Advocacia Previdenciária</span>
+          </div>
         </div>
-        <div className="relative z-10 max-w-md">
-          <h1 className="font-display text-4xl leading-tight text-[var(--sidebar-text)] mb-4">
+
+        {/* Hero copy */}
+        <div className="relative z-10 max-w-sm">
+          <h1 className="font-display text-[40px] font-extrabold leading-[1.1] text-white mb-5 tracking-tight">
             Gestão completa do seu escritório
           </h1>
-          <p className="text-[var(--sidebar-muted)] text-base leading-relaxed">
-            Acesse leads, clientes, agendamentos e configurações em um só lugar.
+          <p className="text-white/50 text-[15px] leading-relaxed mb-8">
+            Leads, clientes, agendamentos e automações com IA — tudo em um só lugar.
           </p>
+
+          {/* Features pills */}
+          <div className="flex flex-col gap-2.5">
+            {[
+              'Funil de atendimento com Kanban',
+              'Chat integrado com WhatsApp',
+              'Agente de IA 24/7',
+            ].map((feat) => (
+              <div key={feat} className="flex items-center gap-2.5">
+                <div className="w-4 h-4 rounded-full bg-[var(--brand)]/20 flex items-center justify-center shrink-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />
+                </div>
+                <span className="text-white/60 text-[13px]">{feat}</span>
+              </div>
+            ))}
+          </div>
         </div>
-        <p className="relative z-10 text-xs text-[var(--sidebar-muted)]">
-          Acesso restrito a usuários autorizados
-        </p>
+
+        {/* Rodapé */}
+        <div className="relative z-10 flex items-center gap-2 text-white/25 text-[11px]">
+          <ShieldCheck size={13} />
+          <span>Acesso restrito a usuários autorizados</span>
+        </div>
       </div>
 
-      <div className="flex-1 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md">
-          <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <Scale className="text-[var(--accent)]" size={24} />
-            <span className="font-display text-sm font-semibold tracking-wide uppercase text-[var(--text-main)]">
-              Escritório de Advocacia
-            </span>
+      {/* ── Painel de login (direito) ──────────────────────────── */}
+      <div className="flex-1 flex items-center justify-center px-5 py-12">
+        <div className="w-full max-w-[400px]">
+
+          {/* Logo mobile */}
+          <div className="lg:hidden flex items-center gap-3 mb-10 justify-center">
+            <div className="w-9 h-9 rounded-[9px] bg-[var(--brand)]/15 flex items-center justify-center">
+              <Scale className="text-[var(--brand)]" size={18} />
+            </div>
+            <div className="flex flex-col leading-tight">
+              <span className="text-[var(--text-main)] text-[13px] font-bold">Angélica Tabosa</span>
+              <span className="text-[var(--text-muted)] text-[10px] uppercase tracking-wider font-semibold">Advocacia Previdenciária</span>
+            </div>
           </div>
 
-          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[12px] shadow-sm p-6 sm:p-8">
-            <h2 className="font-display text-2xl text-[var(--text-main)] mb-1">Entrar</h2>
-            <p className="text-sm text-[var(--text-muted)] mb-6">
-              Use o e-mail e a senha do administrador
-            </p>
+          {/* Card do formulário */}
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[16px] p-7 sm:p-8" style={{ boxShadow: 'var(--shadow-elevated)' }}>
+            <div className="mb-6">
+              <h2 className="font-display text-[24px] font-extrabold text-[var(--text-main)] mb-1 tracking-tight">
+                Bem-vindo de volta
+              </h2>
+              <p className="text-[13.5px] text-[var(--text-muted)]">
+                Use o e-mail e a senha da sua conta
+              </p>
+            </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <Input
@@ -116,17 +156,17 @@ export default function Login() {
                   className="absolute right-3 top-[34px] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors"
                   onClick={() => setShowPassword((v) => !v)}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
 
               {error && (
-                <div className="rounded-[8px] border border-[var(--danger)]/30 bg-[var(--danger)]/10 px-3 py-2 text-sm text-[var(--danger)]">
+                <div className="rounded-[8px] border border-[var(--danger-border)] bg-[var(--danger-bg)] px-3.5 py-2.5 text-[13px] text-[var(--danger-text)]">
                   {error}
                 </div>
               )}
 
-              <Button type="submit" className="w-full mt-2" size="lg" isLoading={isSubmitting}>
+              <Button type="submit" className="w-full mt-1" size="lg" isLoading={isSubmitting}>
                 Entrar no sistema
               </Button>
             </form>

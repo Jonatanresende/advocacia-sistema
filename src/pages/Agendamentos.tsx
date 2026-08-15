@@ -39,33 +39,35 @@ export default function Agendamentos() {
     <div>
       <PageHeader
         title="Agendamentos"
-        description="Gerencie todas as consultas marcadas no escritório. Clique em qualquer linha para ver o histórico do lead. Atualize o status de cada agendamento — ao confirmar o comparecimento, o lead é promovido a cliente automaticamente."
+        description="Gerencie todas as consultas marcadas no escritório. Atualize o status de cada agendamento — ao confirmar o comparecimento, o lead é promovido a cliente automaticamente."
       />
 
-      <Card noPadding className="shadow-none !border-[var(--border-card)] rounded-[14px] overflow-hidden">
+      <Card noPadding className="overflow-hidden">
         {isLoading ? (
           <div className="p-12 flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]" />
           </div>
         ) : agendamentos.length === 0 ? (
           <div className="p-16 flex flex-col items-center justify-center text-center">
             <div className="w-14 h-14 bg-[var(--bg-base)] rounded-[12px] flex items-center justify-center mb-4 border border-[var(--border-card)]">
               <Inbox size={22} className="text-[var(--text-muted)]" />
             </div>
-            <h3 className="text-[15px] font-semibold text-[var(--text-main)] font-display mb-1">Nenhum agendamento encontrado</h3>
+            <h3 className="text-[15px] font-bold text-[var(--text-main)] font-display mb-1">
+              Nenhum agendamento encontrado
+            </h3>
             <p className="text-[var(--text-muted)] text-[13px]">Os agendamentos aparecerão aqui quando forem marcados.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[var(--border-card)] bg-[var(--bg-base)]/50">
-                  <th className="p-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Data do Agendamento</th>
-                  <th className="p-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Modalidade</th>
-                  <th className="p-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Nome</th>
-                  <th className="p-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">WhatsApp</th>
-                  <th className="p-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Motivo do Contato</th>
-                  <th className="p-4 text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider">Ação / Status</th>
+                <tr className="border-b border-[var(--border-card)] bg-[var(--bg-base)]/60">
+                  <th className="p-4 text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Data do Agendamento</th>
+                  <th className="p-4 text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Modalidade</th>
+                  <th className="p-4 text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Nome</th>
+                  <th className="p-4 text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">WhatsApp</th>
+                  <th className="p-4 text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Motivo do Contato</th>
+                  <th className="p-4 text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Ação / Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-card)]">
@@ -81,16 +83,18 @@ export default function Agendamentos() {
                     >
                       <td className="p-4 text-[13px] text-[var(--text-main)] whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <CalendarDays size={15} className="text-[var(--accent)]" />
-                          <span className="font-semibold">{format(new Date(agendamento.data_hora_inicio), 'dd/MM/yyyy HH:mm')}</span>
+                          <CalendarDays size={14} className="text-[var(--primary)]" />
+                          <span className="font-semibold">
+                            {format(new Date(agendamento.data_hora_inicio), 'dd/MM/yyyy HH:mm')}
+                          </span>
                         </div>
                       </td>
                       <td className="p-4 text-[13px] text-[var(--text-muted)] whitespace-nowrap font-medium">
                         <div className="flex items-center gap-1.5">
                           {agendamento.modalidade === 'online' ? (
-                            <><Video size={14} /> Online</>
+                            <><Video size={13} className="text-[var(--primary)]" /> Online</>
                           ) : (
-                            <><MapPin size={14} /> Presencial</>
+                            <><MapPin size={13} className="text-[var(--warning)]" /> Presencial</>
                           )}
                         </div>
                       </td>
@@ -105,7 +109,7 @@ export default function Agendamentos() {
                         <select
                           value={agendamento.status}
                           onChange={(e) => handleStatusChange(agendamento.id, e.target.value as AgendamentoStatus)}
-                          className="text-[12px] font-semibold rounded-[8px] px-3 py-1.5 border border-[var(--border-card)] bg-[var(--bg-card)] text-[var(--text-main)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] cursor-pointer hover:border-[var(--text-muted)] transition-colors"
+                          className="text-[12px] font-semibold rounded-[8px] px-3 py-1.5 border border-[var(--border-card)] bg-[var(--bg-card)] text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/30 focus:border-[var(--primary)] cursor-pointer hover:border-[var(--primary)]/50 transition-all"
                         >
                           <option value="agendado">Agendado</option>
                           <option value="confirmado">Confirmado</option>
@@ -123,14 +127,11 @@ export default function Agendamentos() {
         )}
       </Card>
 
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Promover a Cliente"
-      >
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Promover a Cliente">
         <p className="text-[var(--text-muted)] text-[14px] mb-6 leading-relaxed">
-          Ao confirmar o comparecimento, este lead será promovido a <strong className="text-[var(--accent)] font-semibold">cliente</strong> automaticamente no sistema.
-          Deseja prosseguir com esta ação?
+          Ao confirmar o comparecimento, este lead será promovido a{' '}
+          <strong className="text-[var(--primary)] font-bold">cliente</strong> automaticamente no sistema.
+          Deseja prosseguir?
         </p>
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={isUpdating}>

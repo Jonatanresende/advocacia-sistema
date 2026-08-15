@@ -187,7 +187,7 @@ export default function UsuarioDetalhe() {
           {/* Dados Pessoais */}
           <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[14px] p-6">
             <h2 className="text-[15px] font-display font-semibold text-[var(--text-main)] mb-5 flex items-center gap-2">
-              <User size={16} className="text-[var(--accent)]" />
+              <User size={16} className="text-[var(--primary)]" />
               Dados Pessoais
             </h2>
             <div className="space-y-4">
@@ -202,7 +202,7 @@ export default function UsuarioDetalhe() {
                   onChange={(e) => setNome(e.target.value)}
                   placeholder="Ex: Dr. João Silva"
                   required
-                  className="w-full px-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all"
+                  className="w-full px-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-all"
                 />
               </div>
 
@@ -220,7 +220,7 @@ export default function UsuarioDetalhe() {
                     placeholder="usuario@escritorio.com"
                     required
                     disabled={!isNew}
-                    className="w-full pl-9 pr-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full pl-9 pr-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   />
                 </div>
                 {!isNew && (
@@ -240,7 +240,7 @@ export default function UsuarioDetalhe() {
                     value={telefone}
                     onChange={(e) => setTelefone(e.target.value)}
                     placeholder="(11) 99999-9999"
-                    className="w-full pl-9 pr-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all"
+                    className="w-full pl-9 pr-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-all"
                   />
                 </div>
               </div>
@@ -250,7 +250,7 @@ export default function UsuarioDetalhe() {
           {/* Papel */}
           <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[14px] p-6">
             <h2 className="text-[15px] font-display font-semibold text-[var(--text-main)] mb-5 flex items-center gap-2">
-              <Shield size={16} className="text-[var(--accent)]" />
+              <Shield size={16} className="text-[var(--primary)]" />
               Papel no Sistema
             </h2>
             <div className="grid grid-cols-2 gap-3">
@@ -264,12 +264,12 @@ export default function UsuarioDetalhe() {
                     onClick={() => setRole(opt.value)}
                     className={`flex flex-col items-start gap-2 p-4 rounded-[12px] border-2 text-left transition-all ${
                       isSelected
-                        ? 'border-[var(--accent)] bg-[var(--accent)]/10'
-                        : 'border-[var(--border-card)] hover:border-[var(--accent)]/30'
+                        ? 'border-[var(--primary)] bg-[var(--primary)]/10'
+                        : 'border-[var(--border-card)] hover:border-[var(--primary)]/30'
                     }`}
                   >
-                    <div className={`p-2 rounded-lg ${isSelected ? 'bg-[var(--accent)]/20' : 'bg-white/5'}`}>
-                      <Icon size={16} className={isSelected ? 'text-[var(--accent)]' : 'text-[var(--text-muted)]'} />
+                    <div className={`p-2 rounded-lg ${isSelected ? 'bg-[var(--primary)]/20' : 'bg-white/5'}`}>
+                      <Icon size={16} className={isSelected ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]'} />
                     </div>
                     <div>
                       <p className={`text-[13px] font-semibold ${isSelected ? 'text-[var(--text-main)]' : 'text-[var(--text-muted)]'}`}>
@@ -298,7 +298,7 @@ export default function UsuarioDetalhe() {
                             name="vincular_agenda"
                             checked={criarCadastroAdvogado}
                             onChange={() => setCriarCadastroAdvogado(true)}
-                            className="accent-[var(--accent)]"
+                            className="accent-[var(--primary)]"
                           />
                           Criar novo cadastro automaticamente
                         </label>
@@ -309,7 +309,7 @@ export default function UsuarioDetalhe() {
                               name="vincular_agenda"
                               checked={!criarCadastroAdvogado}
                               onChange={() => setCriarCadastroAdvogado(false)}
-                              className="accent-[var(--accent)]"
+                              className="accent-[var(--primary)]"
                             />
                             Vincular a um existente
                           </label>
@@ -329,7 +329,7 @@ export default function UsuarioDetalhe() {
                               type="button"
                               onClick={() => setAdvogadoCor(c.value)}
                               className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all ${c.class} ${
-                                advogadoCor === c.value
+                                  advogadoCor === c.value
                                   ? 'border-[var(--text-main)] scale-110 shadow-lg'
                                   : 'border-transparent hover:scale-105'
                               }`}
@@ -353,7 +353,7 @@ export default function UsuarioDetalhe() {
                         <select
                           value={advogadoId}
                           onChange={(e) => setAdvogadoId(e.target.value)}
-                          className="w-full px-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all"
+                          className="w-full px-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-all"
                         >
                           <option value="">— Selecionar advogado cadastrado —</option>
                           {advogados.map((adv) => (
@@ -373,7 +373,7 @@ export default function UsuarioDetalhe() {
                     <select
                       value={advogadoId}
                       onChange={(e) => setAdvogadoId(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all"
+                      className="w-full px-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-all"
                     >
                       <option value="">— Selecionar advogado cadastrado —</option>
                       {advogados.map((adv) => (
@@ -394,7 +394,7 @@ export default function UsuarioDetalhe() {
           {/* Senha */}
           <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[14px] p-6">
             <h2 className="text-[15px] font-display font-semibold text-[var(--text-main)] mb-1 flex items-center gap-2">
-              <KeyRound size={16} className="text-[var(--accent)]" />
+              <KeyRound size={16} className="text-[var(--primary)]" />
               {isNew ? 'Senha de Acesso' : 'Redefinir Senha'}
             </h2>
             {!isNew && (
@@ -415,7 +415,7 @@ export default function UsuarioDetalhe() {
                     placeholder="Mínimo 8 caracteres"
                     required={isNew}
                     minLength={8}
-                    className="w-full px-3 pr-10 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all"
+                    className="w-full px-3 pr-10 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-all"
                   />
                   <button
                     type="button"
@@ -437,7 +437,7 @@ export default function UsuarioDetalhe() {
                     onChange={(e) => setConfirmarSenha(e.target.value)}
                     placeholder="Repita a senha"
                     required={isNew || !!senha}
-                    className="w-full px-3 pr-10 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all"
+                    className="w-full px-3 pr-10 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-all"
                   />
                   <button
                     type="button"
@@ -468,7 +468,7 @@ export default function UsuarioDetalhe() {
                   type="button"
                   onClick={() => setAtivo(!ativo)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                    ativo ? 'bg-[var(--accent)]' : 'bg-white/10'
+                    ativo ? 'bg-[var(--primary)]' : 'bg-white/10'
                   }`}
                 >
                   <span
@@ -489,7 +489,7 @@ export default function UsuarioDetalhe() {
             <button
               type="submit"
               disabled={isSaving || isLoadingUsuarios}
-              className="flex items-center gap-2 px-6 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white rounded-[10px] text-[13px] font-semibold transition-all shadow-lg shadow-[var(--accent)]/20 hover:shadow-[var(--accent)]/40 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-6 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-[10px] text-[13px] font-semibold transition-all shadow-lg shadow-[var(--primary)]/10 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />

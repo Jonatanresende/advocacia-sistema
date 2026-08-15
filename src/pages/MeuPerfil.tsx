@@ -144,7 +144,7 @@ export default function MeuPerfil() {
             <div className="flex items-center gap-5">
               {/* Avatar */}
               <div className="relative">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--accent)] to-blue-500 flex items-center justify-center text-white font-bold text-2xl shadow-xl shadow-[var(--accent)]/30">
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--primary)] to-blue-500 flex items-center justify-center text-white font-bold text-2xl shadow-xl shadow-[var(--primary)]/20">
                   {perfil?.nome ? getInitials(perfil.nome) : <User size={28} />}
                 </div>
                 {/* Online dot */}
@@ -171,7 +171,7 @@ export default function MeuPerfil() {
           {/* Dados Pessoais */}
           <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[14px] p-6">
             <h2 className="text-[15px] font-display font-semibold text-[var(--text-main)] mb-5 flex items-center gap-2">
-              <User size={16} className="text-[var(--accent)]" />
+              <User size={16} className="text-[var(--primary)]" />
               Dados Pessoais
             </h2>
             <form onSubmit={handleSavePerfil} className="space-y-4">
@@ -185,7 +185,7 @@ export default function MeuPerfil() {
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   required
-                  className="w-full px-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all"
+                  className="w-full px-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-all"
                 />
               </div>
 
@@ -218,7 +218,7 @@ export default function MeuPerfil() {
                     value={telefone}
                     onChange={(e) => setTelefone(e.target.value)}
                     placeholder="(11) 99999-9999"
-                    className="w-full pl-9 pr-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all"
+                    className="w-full pl-9 pr-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-all"
                   />
                 </div>
               </div>
@@ -226,7 +226,7 @@ export default function MeuPerfil() {
               <button
                 type="submit"
                 disabled={isSavingPerfil}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white rounded-[10px] text-[13px] font-semibold transition-all shadow-lg shadow-[var(--accent)]/20 disabled:opacity-50"
+                className="flex items-center gap-2 px-5 py-2.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-[10px] text-[13px] font-semibold transition-all shadow-lg shadow-[var(--primary)]/10 disabled:opacity-50"
               >
                 {isSavingPerfil ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
@@ -241,7 +241,7 @@ export default function MeuPerfil() {
           {/* Alterar Senha */}
           <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[14px] p-6">
             <h2 className="text-[15px] font-display font-semibold text-[var(--text-main)] mb-1 flex items-center gap-2">
-              <KeyRound size={16} className="text-[var(--accent)]" />
+              <KeyRound size={16} className="text-[var(--primary)]" />
               Alterar Senha
             </h2>
             <p className="text-[12px] text-[var(--text-muted)] mb-5">
@@ -261,7 +261,7 @@ export default function MeuPerfil() {
                     onChange={(e) => setNovaSenha(e.target.value)}
                     placeholder="Mínimo 8 caracteres"
                     minLength={8}
-                    className="w-full px-3 pr-10 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all"
+                    className="w-full px-3 pr-10 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-all"
                   />
                   <button
                     type="button"
@@ -284,7 +284,7 @@ export default function MeuPerfil() {
                     value={confirmarSenha}
                     onChange={(e) => setConfirmarSenha(e.target.value)}
                     placeholder="Repita a nova senha"
-                    className="w-full px-3 pr-10 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all"
+                    className="w-full px-3 pr-10 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-all"
                   />
                   <button
                     type="button"
@@ -305,7 +305,7 @@ export default function MeuPerfil() {
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-[10px] text-[13px] font-semibold transition-all shadow-lg disabled:opacity-50 ${
                   senhaSucesso
                     ? 'bg-green-500 text-white shadow-green-500/20'
-                    : 'bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white shadow-[var(--accent)]/20'
+                    : 'bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white shadow-[var(--primary)]/10'
                 }`}
               >
                 {isSavingSenha ? (

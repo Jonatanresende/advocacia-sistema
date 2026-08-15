@@ -12,23 +12,29 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="flex flex-col gap-1.5 w-full">
         {label && (
-          <label className="text-sm font-medium text-[var(--text-main)]">
+          <label className="text-[13px] font-semibold text-[var(--text-main)]">
             {label}
           </label>
         )}
         <input
           ref={ref}
           className={clsx(
-            'px-3 py-2 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[8px] text-[var(--text-main)] text-sm',
-            'focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent',
+            'px-3 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[8px]',
+            'text-[var(--text-main)] text-sm',
+            'transition-all duration-150',
+            'focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/40 focus:border-[var(--primary)]',
             'placeholder:text-[var(--text-muted)]',
             'disabled:opacity-50 disabled:cursor-not-allowed',
-            error && 'border-[var(--danger)] focus:ring-[var(--danger)]',
+            error && 'border-[var(--danger)] focus:ring-[var(--danger)]/40 focus:border-[var(--danger)]',
             className
           )}
           {...props}
         />
-        {error && <span className="text-xs text-[var(--danger)]">{error}</span>}
+        {error && (
+          <span className="text-xs text-[var(--danger)] flex items-center gap-1">
+            {error}
+          </span>
+        )}
       </div>
     )
   }

@@ -67,7 +67,7 @@ function ToggleAtivo({
       disabled={disabled}
       title={ativo ? 'Desativar usuário' : 'Ativar usuário'}
       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
-        ativo ? 'bg-[var(--accent)]' : 'bg-white/10'
+        ativo ? 'bg-[var(--primary)]' : 'bg-white/10'
       }`}
     >
       <span
@@ -129,7 +129,7 @@ export default function Usuarios() {
           <button
             type="button"
             onClick={() => navigate('/usuarios/novo')}
-            className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white rounded-[10px] text-[13px] font-semibold transition-all shadow-lg shadow-[var(--accent)]/20 hover:shadow-[var(--accent)]/40 hover:-translate-y-0.5"
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)] text-white rounded-[10px] text-[13px] font-semibold transition-all shadow-lg shadow-[var(--primary)]/10 hover:-translate-y-0.5"
           >
             <UserPlus size={16} />
             Novo Usuário
@@ -178,13 +178,13 @@ export default function Usuarios() {
             placeholder={`Buscar ${tab === 'advogado' ? 'advogado' : 'funcionário'}...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[10px] text-[13px] text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all"
+            className="w-full pl-9 pr-4 py-2 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[10px] text-[13px] text-[var(--text-main)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-all"
           />
         </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -237,7 +237,7 @@ function UsuarioCard({
 
   return (
     <div
-      className={`flex items-center gap-4 p-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[14px] transition-all hover:border-[var(--accent)]/30 hover:shadow-lg hover:shadow-black/20 group ${
+      className={`flex items-center gap-4 p-4 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[14px] transition-all hover:border-[var(--primary)]/30 hover:shadow-lg hover:shadow-black/20 group ${
         !usuario.ativo ? 'opacity-50' : ''
       }`}
     >

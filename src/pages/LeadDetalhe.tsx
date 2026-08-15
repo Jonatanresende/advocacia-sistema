@@ -120,7 +120,7 @@ export default function LeadDetalhe() {
   }
 
   if (isLoading) {
-    return <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div></div>
+    return <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]"></div></div>
   }
 
   if (!lead) {
@@ -140,7 +140,7 @@ export default function LeadDetalhe() {
           <select
             value={lead.status}
             onChange={(e) => handleStatusChange(e.target.value as LeadStatus)}
-            className="text-sm font-medium rounded-full px-3 py-1 border cursor-pointer bg-[var(--bg-card)] text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            className="text-sm font-medium rounded-full px-3 py-1 border cursor-pointer bg-[var(--bg-card)] text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
             style={{
               backgroundColor: statusConfig[lead.status]?.bg,
               color: statusConfig[lead.status]?.text,
@@ -150,7 +150,7 @@ export default function LeadDetalhe() {
             {Object.entries(statusConfig)
               .filter(([k]) => !['agendado', 'confirmado', 'faltou', 'cancelado'].includes(k))
               .map(([key, cfg]) => (
-                <option key={key} value={key} style={{ background: '#fff', color: '#000' }}>
+                <option key={key} value={key} style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>
                   {cfg.label}
                 </option>
               ))}
@@ -162,7 +162,7 @@ export default function LeadDetalhe() {
         <div className="lg:col-span-2 flex flex-col gap-6">
           <Card className="flex flex-col gap-4">
             <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
-              <MessageSquare size={18} className="text-[var(--accent)]" />
+              <MessageSquare size={18} className="text-[var(--primary)]" />
               Resumo do Contato
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
@@ -180,7 +180,7 @@ export default function LeadDetalhe() {
                   <select
                     value={lead.owner_id || ''}
                     onChange={(e) => handleOwnerChange(e.target.value)}
-                    className="w-full sm:max-w-xs text-[13px] font-semibold rounded-[8px] px-3 py-2 border border-[var(--border-card)] bg-[var(--bg-base)] text-[var(--text-main)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] cursor-pointer"
+                    className="w-full sm:max-w-xs text-[13px] font-semibold rounded-[8px] px-3 py-2 border border-[var(--border-card)] bg-[var(--bg-base)] text-[var(--text-main)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] cursor-pointer"
                   >
                     <option value="">Sem responsável (Fila Geral)</option>
                     {usuarios.map((u) => (
@@ -207,7 +207,7 @@ export default function LeadDetalhe() {
           {lead.area_previdenciaria && lead.area_previdenciaria !== 'nao_identificada' && (
             <Card className="flex flex-col gap-4">
               <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
-                <ShieldCheck size={18} className="text-[var(--accent)]" />
+                <ShieldCheck size={18} className="text-[var(--primary)]" />
                 Qualificação Previdenciária
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
@@ -236,7 +236,7 @@ export default function LeadDetalhe() {
 
           <Card className="flex flex-col gap-4">
             <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
-              <Clock size={18} className="text-[var(--accent)]" />
+              <Clock size={18} className="text-[var(--primary)]" />
               Linha do Tempo
             </h3>
             <div className="space-y-4 text-sm">
@@ -271,7 +271,7 @@ export default function LeadDetalhe() {
 
           <Card className="flex flex-col gap-4">
             <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
-              <FileText size={18} className="text-[var(--accent)]" />
+              <FileText size={18} className="text-[var(--primary)]" />
               Documentos Anexados
             </h3>
             <div className="flex flex-col gap-3">
@@ -280,7 +280,7 @@ export default function LeadDetalhe() {
               ) : (
                 documentos.map((doc) => (
                   <div key={doc.id} className="flex items-start gap-3 p-3 rounded-[8px] bg-[var(--bg-base)] border border-[var(--border-card)]">
-                    <div className="mt-1 text-[var(--accent)]">
+                    <div className="mt-1 text-[var(--primary)]">
                       {doc.tipo?.toLowerCase().includes('imagem') ? <ImageIcon size={20} /> : <FileText size={20} />}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -316,7 +316,7 @@ export default function LeadDetalhe() {
         <div className="lg:col-span-1">
           <Card className="h-full flex flex-col gap-4">
             <h3 className="font-semibold text-lg font-display flex items-center gap-2 border-b border-[var(--border-card)] pb-3">
-              <Edit3 size={18} className="text-[var(--accent)]" />
+              <Edit3 size={18} className="text-[var(--primary)]" />
               Anotações Internas
             </h3>
             <div className="flex-1 flex flex-col min-h-[300px]">
@@ -324,7 +324,7 @@ export default function LeadDetalhe() {
                 value={anotacoes}
                 onChange={(e) => setAnotacoes(e.target.value)}
                 placeholder="Adicione notas visíveis apenas para a equipe do escritório..."
-                className="flex-1 w-full bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[8px] p-3 text-sm text-[var(--text-main)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--accent)] mb-4"
+                className="flex-1 w-full bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[8px] p-3 text-sm text-[var(--text-main)] resize-none focus:outline-none focus:ring-2 focus:ring-[var(--primary)] mb-4"
               />
               <Button onClick={handleSaveAnotacoes} isLoading={isSaving} className="w-full">
                 Salvar Anotações

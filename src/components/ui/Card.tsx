@@ -10,7 +10,9 @@ export default function Card({ children, className, noPadding = false }: CardPro
   return (
     <div
       className={[
-        'bg-[var(--bg-card)] border border-[var(--border-card)] rounded-card shadow-sm overflow-hidden',
+        'bg-[var(--bg-card)] border border-[var(--border-card)] rounded-card overflow-hidden',
+        'shadow-[var(--shadow-card)]',
+        'transition-shadow duration-150',
         !noPadding ? 'p-4 sm:p-6' : '',
         className || ''
       ].join(' ')}

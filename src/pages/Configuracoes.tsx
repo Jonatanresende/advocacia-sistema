@@ -130,7 +130,7 @@ export default function Configuracoes() {
   }
 
   if (isLoading) {
-    return <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]"></div></div>
+    return <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]"></div></div>
   }
 
   // Agrupar permissões por rota para exibição mais limpa
@@ -150,7 +150,7 @@ export default function Configuracoes() {
         {/* Seção 1 */}
         <Card className="flex flex-col gap-6 shadow-none !border-[var(--border-card)] rounded-[14px] p-6">
           <h3 className="font-semibold text-[16px] text-[var(--text-main)] font-display flex items-center gap-2.5 border-b border-[var(--border-card)] pb-4">
-            <Building2 size={18} className="text-[var(--accent)]" />
+            <Building2 size={18} className="text-[var(--primary)]" />
             Informações do Escritório
           </h3>
 
@@ -183,7 +183,7 @@ export default function Configuracoes() {
         {/* Seção 2 - Permissões de Acesso */}
         <Card className="flex flex-col gap-6 shadow-none !border-[var(--border-card)] rounded-[14px] p-6">
           <h3 className="font-semibold text-[16px] text-[var(--text-main)] font-display flex items-center gap-2.5 border-b border-[var(--border-card)] pb-4">
-            <Shield size={18} className="text-[var(--accent)]" />
+            <Shield size={18} className="text-[var(--primary)]" />
             Permissões de Acesso
           </h3>
           <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
@@ -222,7 +222,7 @@ export default function Configuracoes() {
                         />
                         <div className={clsx(
                           "w-11 h-6 rounded-full relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--border-card)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white",
-                          permAdv.ativo ? "bg-[var(--accent)]" : "bg-[var(--border-card)]"
+                          permAdv.ativo ? "bg-[var(--primary)]" : "bg-[var(--border-card)]"
                         )}></div>
                       </label>
                     )}
@@ -240,7 +240,7 @@ export default function Configuracoes() {
                         />
                         <div className={clsx(
                           "w-11 h-6 rounded-full relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--border-card)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white",
-                          permFunc.ativo ? "bg-[var(--accent)]" : "bg-[var(--border-card)]"
+                          permFunc.ativo ? "bg-[var(--primary)]" : "bg-[var(--border-card)]"
                         )}></div>
                       </label>
                     )}
@@ -258,7 +258,7 @@ export default function Configuracoes() {
         {/* Seção 3 */}
         <Card className="flex flex-col gap-6 shadow-none !border-[var(--border-card)] rounded-[14px] p-6">
           <h3 className="font-semibold text-[16px] text-[var(--text-main)] font-display flex items-center gap-2.5 border-b border-[var(--border-card)] pb-4">
-            <Clock size={18} className="text-[var(--accent)]" />
+            <Clock size={18} className="text-[var(--primary)]" />
             Horário de Funcionamento
           </h3>
 
@@ -286,7 +286,7 @@ export default function Configuracoes() {
                       />
                       <div className={clsx(
                         "w-11 h-6 rounded-full relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--border-card)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white",
-                        row.aberto ? "bg-[var(--accent)]" : "bg-[var(--border-card)]"
+                        row.aberto ? "bg-[var(--primary)]" : "bg-[var(--border-card)]"
                       )}></div>
                       <span className="ml-3 text-[13px] font-medium text-[var(--text-main)]">
                         {row.aberto ? 'Aberto' : 'Fechado'}
