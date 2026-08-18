@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
   if (action === 'enviar_mensagem') {
     if (!texto) return json({ error: 'Campo texto é obrigatório' }, 400)
 
-    const conteudoFinal = `*${nomeAtendente}:* ${texto}`
+    const conteudoFinal = `**${nomeAtendente}**: ${texto}`
 
     const resp = await fetch(`${conversationUrl}/messages`, {
       method: 'POST',
