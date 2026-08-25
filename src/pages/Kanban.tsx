@@ -174,7 +174,7 @@ function Column({
 }
 
 export default function Kanban() {
-  const { leads, isLoading, refetch, updateLeadStatus } = useLeads()
+  const { leads, isLoading, refetch, updateLeadStatus, confirmComparecimento } = useLeads()
   const [localLeads, setLocalLeads] = useState<LeadAdv[]>([])
 
   const [activeLead, setActiveLead] = useState<LeadAdv | null>(null)
@@ -230,7 +230,7 @@ export default function Kanban() {
   const confirmUpdate = async () => {
     if (!pendingUpdate) return
     setIsUpdating(true)
-    await updateLeadStatus(pendingUpdate.id, pendingUpdate.newStatus)
+    await confirmComparecimento(pendingUpdate.id)
     setIsUpdating(false)
     setIsModalOpen(false)
     setPendingUpdate(null)

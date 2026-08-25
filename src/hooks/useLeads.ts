@@ -105,6 +105,34 @@ export function useLeads(filter?: DateFilter, status?: LeadStatus, excludeClient
     }
   }
 
+  // Usado especificamente ao marcar "Compareceu" no Kanban: atualiza leads_adv
+  // e também o agendamento correspondente em agendamentos_adv, para que
+  // workflows como o de não-comparecimento (que consultam agendamentos_adv)
+  // não tratem esse lead como falta.
+  const confirmComparecimento = async (leadId: string) => {
+    try {
+      const { error: errLead } = await supabase
+        .from('leads_adv')
+        .update({ status: 'compareceu' })
+        .eq('id', leadId)
+      if (errLead) throw errLead
+
+      const { error: errAgendamento } = await supabase
+        .from('agendamentos_adv')
+        .update({ status: 'compareceu' })
+        .eq('lead_id', leadId)
+        .in('status', ['confirmado', 'agendado'])
+      if (errAgendamento) throw errAgendamento
+
+      await fetchLeads()
+      return true
+    } catch (err) {
+      console.error(err)
+      error('Erro ao confirmar comparecimento')
+      return false
+    }
+  }
+
   const updateLeadFields = async (id: string, updates: Partial<LeadAdv>) => {
     try {
       const { error: err } = await supabase.from('leads_adv').update(updates).eq('id', id)
@@ -118,5 +146,5 @@ export function useLeads(filter?: DateFilter, status?: LeadStatus, excludeClient
     }
   }
 
-  return { leads, isLoading, refetch: fetchLeads, updateLeadStatus, updateLeadFields }
+  return { leads, isLoading, refetch: fetchLeads, updateLeadStatus, updateLeadFields, confirmComparecimento }
 }
