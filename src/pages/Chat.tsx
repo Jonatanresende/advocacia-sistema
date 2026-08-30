@@ -1,12 +1,40 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import PageHeader from '../components/ui/PageHeader'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import { useAuth } from '../contexts/AuthContext'
 import { useChatLeads, useChatConversa } from '../hooks/useChat'
+import { useGravadorAudio } from '../hooks/useGravadorAudio'
 import type { LeadAdv } from '../types'
 import { format } from 'date-fns'
-import { MessageSquare, Send, UserCog, Bot, Search, Image as ImageIcon, ArrowLeft } from 'lucide-react'
+import {
+  MessageSquare,
+  Send,
+  UserCog,
+  Bot,
+  Search,
+  Image as ImageIcon,
+  ArrowLeft,
+  Paperclip,
+  Mic,
+  Square,
+  Trash2,
+  FileText,
+  X,
+} from 'lucide-react'
+import AudioMessage from '../components/chat/AudioMessage'
+
+function formatarTempoGravacao(segundos: number) {
+  const min = Math.floor(segundos / 60)
+  const seg = segundos % 60
+  return `${min}:${seg.toString().padStart(2, '0')}`
+}
+
+function formatarTamanho(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
 
 function iniciais(nome: string | null) {
   if (!nome) return '?'
@@ -56,6 +84,8 @@ function ConversaItem({ lead, ativo, onClick }: { lead: LeadAdv; ativo: boolean;
 function Balao({ msg }: { msg: import('../hooks/useChat').ChatwootMessage }) {
   const doLead = msg.message_type === 0
   const nota = msg.private
+  // Bolha com fundo escuro (texto branco) só quando é mensagem enviada e não é nota interna
+  const bolhaEscura = !doLead && !nota
 
   return (
     <div className={`flex ${doLead ? 'justify-start' : 'justify-end'} mb-3`}>
@@ -68,18 +98,25 @@ function Balao({ msg }: { msg: import('../hooks/useChat').ChatwootMessage }) {
               : 'bg-[var(--primary)] text-white'
         }`}
       >
-        {msg.content || <span className="italic opacity-70">(sem texto)</span>}
-        {msg.attachments?.map((att) => (
-          <a
-            key={att.id}
-            href={att.data_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 flex items-center gap-1 text-xs underline opacity-90"
-          >
-            <ImageIcon size={12} /> Ver anexo
-          </a>
-        ))}
+        {msg.content ||
+          (!msg.attachments?.length && <span className="italic opacity-70">(sem texto)</span>)}
+        {msg.attachments?.map((att) =>
+          att.file_type === 'audio' ? (
+            <div key={att.id} className={msg.content ? 'mt-2' : ''}>
+              <AudioMessage src={att.data_url} outgoing={bolhaEscura} />
+            </div>
+          ) : (
+            <a
+              key={att.id}
+              href={att.data_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex items-center gap-1 text-xs underline opacity-90"
+            >
+              <ImageIcon size={12} /> Ver anexo
+            </a>
+          )
+        )}
         <div className="text-[10px] mt-1 opacity-50 text-right">
           {format(new Date(msg.created_at * 1000), 'dd/MM HH:mm')}
         </div>
@@ -94,8 +131,20 @@ export default function Chat() {
   const [leadSelecionado, setLeadSelecionado] = useState<LeadAdv | null>(null)
   const [busca, setBusca] = useState('')
   const [texto, setTexto] = useState('')
+  const [arquivoAnexado, setArquivoAnexado] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   // Estado de UI: em mobile mostra lista ou conversa
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
+
+  const {
+    gravando,
+    tempoGravacao,
+    audioGravado,
+    iniciarGravacao,
+    pararGravacao,
+    cancelarGravacao,
+    descartarAudioGravado,
+  } = useGravadorAudio()
 
   const {
     mensagens,
@@ -118,10 +167,31 @@ export default function Chat() {
     )
   }, [leads, busca])
 
+  const anexoPendente = audioGravado?.arquivo ?? arquivoAnexado
+  const podeEnviar = !!texto.trim() || !!anexoPendente
+
   const handleEnviar = async () => {
-    if (!texto.trim()) return
-    const ok = await enviarMensagem(texto)
-    if (ok) setTexto('')
+    if (!podeEnviar) return
+    const ok = await enviarMensagem(texto, anexoPendente)
+    if (ok) {
+      setTexto('')
+      setArquivoAnexado(null)
+      descartarAudioGravado()
+    }
+  }
+
+  const handleSelecionarArquivo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const arquivo = e.target.files?.[0]
+    if (arquivo) setArquivoAnexado(arquivo)
+    e.target.value = '' // permite selecionar o mesmo arquivo de novo depois
+  }
+
+  const iniciarGravacaoComTratamento = async () => {
+    try {
+      await iniciarGravacao()
+    } catch {
+      alert('Não foi possível acessar o microfone. Verifique a permissão do navegador.')
+    }
   }
 
   const handleSelecionarLead = (lead: LeadAdv) => {
@@ -257,29 +327,130 @@ export default function Chat() {
                   ))}
                 </div>
 
+                {/* Preview de anexo pendente (arquivo ou áudio gravado) */}
+                {(arquivoAnexado || audioGravado) && (
+                  <div className="px-3 pt-2.5 border-t border-[var(--border-card)]">
+                    {audioGravado ? (
+                      <div className="flex items-center gap-2 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] px-2 py-1.5">
+                        <button
+                          onClick={descartarAudioGravado}
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--danger)] hover:bg-[var(--danger-bg)] transition-colors shrink-0"
+                          aria-label="Descartar gravação"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <AudioMessage src={audioGravado.url} outgoing={false} />
+                        </div>
+                      </div>
+                    ) : arquivoAnexado ? (
+                      <div className="flex items-center gap-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] px-3 py-2">
+                        <FileText size={16} className="text-[var(--primary)] shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12.5px] text-[var(--text-main)] truncate">{arquivoAnexado.name}</p>
+                          <p className="text-[10.5px] text-[var(--text-muted)]">{formatarTamanho(arquivoAnexado.size)}</p>
+                        </div>
+                        <button
+                          onClick={() => setArquivoAnexado(null)}
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--danger-bg)] hover:text-[var(--danger)] transition-colors shrink-0"
+                          aria-label="Remover anexo"
+                        >
+                          <X size={15} />
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+
                 {/* Input de envio */}
-                <div className="p-3 border-t border-[var(--border-card)] flex items-end gap-2">
-                  <textarea
-                    value={texto}
-                    onChange={(e) => setTexto(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        handleEnviar()
-                      }
-                    }}
-                    placeholder="Digite uma mensagem... (Enter para enviar)"
-                    rows={1}
-                    className="flex-1 resize-none px-3 py-2.5 text-[13px] rounded-[10px] bg-[var(--bg-base)] border border-[var(--border-card)] text-[var(--text-main)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]/30 max-h-32 transition-all placeholder:text-[var(--text-muted)]"
+                <div
+                  className={`p-3 flex items-end gap-2 ${
+                    arquivoAnexado || audioGravado ? '' : 'border-t border-[var(--border-card)]'
+                  }`}
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+                    onChange={handleSelecionarArquivo}
                   />
-                  <Button
-                    onClick={handleEnviar}
-                    disabled={isSending || !texto.trim()}
-                    size="md"
-                    className="shrink-0 h-10 w-10 p-0 !px-0 !py-0 items-center justify-center"
-                  >
-                    <Send size={15} />
-                  </Button>
+
+                  {gravando ? (
+                    <div className="flex-1 flex items-center gap-2.5 bg-[var(--danger-bg)] border border-[var(--danger-border)] rounded-[10px] px-3.5 py-2.5">
+                      <span className="w-2 h-2 rounded-full bg-[var(--danger)] animate-pulse shrink-0" />
+                      <span className="text-[13px] text-[var(--danger-text)] tabular-nums font-medium">
+                        {formatarTempoGravacao(tempoGravacao)}
+                      </span>
+                      <span className="text-[12px] text-[var(--danger-text)] opacity-70 flex-1">Gravando áudio...</span>
+                      <button
+                        onClick={cancelarGravacao}
+                        className="text-[var(--danger-text)] hover:opacity-70 transition-opacity shrink-0"
+                        aria-label="Cancelar gravação"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={!!audioGravado}
+                        className="shrink-0 w-10 h-10 rounded-[10px] flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-base)] hover:text-[var(--text-main)] transition-colors disabled:opacity-40 disabled:pointer-events-none"
+                        aria-label="Anexar arquivo"
+                      >
+                        <Paperclip size={17} />
+                      </button>
+                      <textarea
+                        value={texto}
+                        onChange={(e) => setTexto(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault()
+                            handleEnviar()
+                          }
+                        }}
+                        placeholder={
+                          audioGravado ? 'Áudio pronto para enviar' : 'Digite uma mensagem... (Enter para enviar)'
+                        }
+                        rows={1}
+                        disabled={!!audioGravado}
+                        className="flex-1 resize-none px-3 py-2.5 text-[13px] rounded-[10px] bg-[var(--bg-base)] border border-[var(--border-card)] text-[var(--text-main)] outline-none focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]/30 max-h-32 transition-all placeholder:text-[var(--text-muted)] disabled:opacity-60"
+                      />
+                    </>
+                  )}
+
+                  {gravando ? (
+                    <Button
+                      onClick={pararGravacao}
+                      variant="danger"
+                      size="md"
+                      className="shrink-0 h-10 w-10 p-0 !px-0 !py-0 items-center justify-center"
+                      aria-label="Parar gravação"
+                    >
+                      <Square size={13} fill="currentColor" />
+                    </Button>
+                  ) : podeEnviar ? (
+                    <Button
+                      onClick={handleEnviar}
+                      disabled={isSending}
+                      size="md"
+                      className="shrink-0 h-10 w-10 p-0 !px-0 !py-0 items-center justify-center"
+                      aria-label="Enviar"
+                    >
+                      <Send size={15} />
+                    </Button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={iniciarGravacaoComTratamento}
+                      className="shrink-0 w-10 h-10 rounded-[10px] flex items-center justify-center text-[var(--text-muted)] hover:bg-[var(--bg-base)] hover:text-[var(--text-main)] transition-colors"
+                      aria-label="Gravar áudio"
+                    >
+                      <Mic size={17} />
+                    </button>
+                  )}
                 </div>
               </>
             )}

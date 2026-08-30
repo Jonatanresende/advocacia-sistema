@@ -57,7 +57,29 @@ Deno.serve(async (req) => {
   const nomeAtendente = perfilCaller?.nome || 'Atendente'
 
   // ─── Corpo da requisição ─────────────────────────────────────
-  const { action, lead_id, texto } = await req.json()
+  // Aceita tanto JSON (mensagem só de texto) quanto multipart/form-data
+  // (mensagem com anexo: áudio, imagem, PDF ou documento)
+  const contentType = req.headers.get('content-type') || ''
+  let action: string
+  let lead_id: string
+  let texto: string | undefined
+  let anexo: File | null = null
+
+  if (contentType.includes('multipart/form-data')) {
+    const form = await req.formData()
+    action = String(form.get('action') ?? '')
+    lead_id = String(form.get('lead_id') ?? '')
+    const textoForm = form.get('texto')
+    texto = typeof textoForm === 'string' ? textoForm : undefined
+    const anexoForm = form.get('anexo')
+    anexo = anexoForm instanceof File ? anexoForm : null
+  } else {
+    const body = await req.json()
+    action = body.action
+    lead_id = body.lead_id
+    texto = body.texto
+  }
+
   if (!action || !lead_id) {
     return json({ error: 'Campos obrigatórios: action, lead_id' }, 400)
   }
@@ -91,16 +113,23 @@ Deno.serve(async (req) => {
     return json(data)
   }
 
-  // ─── Ação: enviar mensagem manual ─────────────────────────────
+  // ─── Ação: enviar mensagem manual (texto e/ou anexo) ──────────
   if (action === 'enviar_mensagem') {
-    if (!texto) return json({ error: 'Campo texto é obrigatório' }, 400)
+    if (!texto?.trim() && !anexo) {
+      return json({ error: 'Envie um texto ou um anexo' }, 400)
+    }
 
-    const conteudoFinal = `**${nomeAtendente}**: ${texto}`
+    const conteudoFinal = texto?.trim() ? `**${nomeAtendente}**: ${texto.trim()}` : `**${nomeAtendente}**`
+
+    const chatwootForm = new FormData()
+    chatwootForm.append('content', conteudoFinal)
+    chatwootForm.append('message_type', 'outgoing')
+    if (anexo) chatwootForm.append('attachments[]', anexo, anexo.name)
 
     const resp = await fetch(`${conversationUrl}/messages`, {
       method: 'POST',
-      headers: { api_access_token: CHATWOOT_API_TOKEN, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: conteudoFinal, message_type: 'outgoing' }),
+      headers: { api_access_token: CHATWOOT_API_TOKEN },
+      body: chatwootForm,
     })
     const data = await resp.json()
     if (!resp.ok) return json({ error: 'Erro ao enviar mensagem no Chatwoot', detalhe: data }, 400)

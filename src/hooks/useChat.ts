@@ -95,13 +95,24 @@ export function useChatConversa(lead: LeadAdv | null) {
     }
   }, [lead, fetchMensagens])
 
-  const enviarMensagem = useCallback(async (texto: string) => {
-    if (!lead || !texto.trim()) return false
+  const enviarMensagem = useCallback(async (texto: string, arquivo?: File | null) => {
+    if (!lead) return false
+    if (!texto.trim() && !arquivo) return false
     setIsSending(true)
     try {
-      const { data, error: err } = await supabase.functions.invoke('chatwoot-proxy', {
-        body: { action: 'enviar_mensagem', lead_id: lead.id, texto },
-      })
+      let data, err
+      if (arquivo) {
+        const formData = new FormData()
+        formData.append('action', 'enviar_mensagem')
+        formData.append('lead_id', lead.id)
+        if (texto.trim()) formData.append('texto', texto.trim())
+        formData.append('anexo', arquivo, arquivo.name)
+        ;({ data, error: err } = await supabase.functions.invoke('chatwoot-proxy', { body: formData }))
+      } else {
+        ;({ data, error: err } = await supabase.functions.invoke('chatwoot-proxy', {
+          body: { action: 'enviar_mensagem', lead_id: lead.id, texto },
+        }))
+      }
       if (err) throw err
       if (data?.error) throw new Error(data.error)
       // Mandar mensagem manual já assume o atendimento automaticamente
