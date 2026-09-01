@@ -159,7 +159,7 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
                 />
               ))}
             </div>
-          )
+          );
         })}
 
         {/* Admin: Sistema */}

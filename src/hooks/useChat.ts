@@ -33,7 +33,36 @@ export function useChatLeads() {
         .order('ultima_mensagem', { ascending: false, nullsFirst: false })
 
       if (err) throw err
-      setLeads((data as LeadAdv[]) ?? [])
+
+      const leadsBase = (data as LeadAdv[]) ?? []
+
+      // Para cada lead, descobre o timestamp da última mensagem ENVIADA PELO LEAD (message_type 0).
+      // Isso é imune a respostas automáticas da IA!
+      const leadsComTimeLead = await Promise.all(
+        leadsBase.map(async (lead) => {
+          try {
+            const { data: cData } = await supabase.functions.invoke('chatwoot-proxy', {
+              body: { action: 'buscar_mensagens', lead_id: lead.id },
+            })
+            if (Array.isArray(cData?.payload)) {
+              const msgs = cData.payload as ChatwootMessage[]
+              const msgsLead = msgs.filter((m) => m.message_type === 0 && !m.private)
+              if (msgsLead.length > 0) {
+                const ultMsgLead = msgsLead[msgsLead.length - 1]
+                return { ...lead, ultimaMensagemDoLeadMs: ultMsgLead.created_at * 1000 }
+              }
+            }
+          } catch {
+            // Em caso de falha temporária, usa fallback com a ultima_mensagem do banco
+          }
+          return {
+            ...lead,
+            ultimaMensagemDoLeadMs: lead.ultima_mensagem ? new Date(lead.ultima_mensagem).getTime() : 0,
+          }
+        })
+      )
+
+      setLeads(leadsComTimeLead)
     } catch {
       error('Não foi possível carregar a lista de conversas.')
     } finally {
@@ -43,9 +72,25 @@ export function useChatLeads() {
 
   useEffect(() => {
     fetchLeads()
-    // Atualiza a lista periodicamente (nova mensagem pode mudar a ordenação)
-    const interval = setInterval(fetchLeads, 15000)
-    return () => clearInterval(interval)
+    // Atualiza a lista a cada 3 segundos para resposta super rápida
+    const interval = setInterval(fetchLeads, 3000)
+
+    // Inscreve no Realtime para atualização instantânea em tempo real
+    const channel = supabase
+      .channel('use-chat-leads-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'leads_adv' },
+        () => {
+          fetchLeads()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      clearInterval(interval)
+      supabase.removeChannel(channel)
+    }
   }, [fetchLeads])
 
   return { leads, isLoading, refetch: fetchLeads }
@@ -87,8 +132,8 @@ export function useChatConversa(lead: LeadAdv | null) {
     if (!lead) return
 
     fetchMensagens(lead.id)
-    // Poll leve enquanto a conversa está aberta
-    pollingRef.current = setInterval(() => fetchMensagens(lead.id, true), 4000)
+    // Poll rápido a cada 2 segundos enquanto a conversa está aberta
+    pollingRef.current = setInterval(() => fetchMensagens(lead.id, true), 2000)
 
     return () => {
       if (pollingRef.current) clearInterval(pollingRef.current)

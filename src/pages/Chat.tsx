@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import PageHeader from '../components/ui/PageHeader'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
@@ -42,35 +42,68 @@ function iniciais(nome: string | null) {
   return (partes[0][0] + (partes[1]?.[0] ?? '')).toUpperCase()
 }
 
-function ConversaItem({ lead, ativo, onClick }: { lead: LeadAdv; ativo: boolean; onClick: () => void }) {
+// ─── Item da lista de conversas com estado de Não Lido dinâmico ─────────────
+function ConversaItem({
+  lead,
+  ativo,
+  naoLido,
+  onClick,
+}: {
+  lead: LeadAdv
+  ativo: boolean
+  naoLido: boolean
+  onClick: () => void
+}) {
+  // Usa a data da última mensagem enviada pelo LEAD para o horário exibido no card
+  const dataExibicao = useMemo(() => {
+    if (lead.ultimaMensagemDoLeadMs && lead.ultimaMensagemDoLeadMs > 0) {
+      return new Date(lead.ultimaMensagemDoLeadMs)
+    }
+    return lead.ultima_mensagem ? new Date(lead.ultima_mensagem) : null
+  }, [lead.ultimaMensagemDoLeadMs, lead.ultima_mensagem])
+
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left p-3 rounded-[10px] flex items-center gap-3 transition-all duration-150 ${
+      className={`w-full text-left p-3 rounded-[10px] flex items-center gap-3 transition-all duration-150 relative ${
         ativo
           ? 'bg-[var(--primary)]/10 border border-[var(--primary)]/30'
+          : naoLido
+          ? 'bg-emerald-500/10 border border-emerald-500/40 shadow-sm'
           : 'hover:bg-[var(--bg-base)] border border-transparent'
       }`}
     >
-      {/* Avatar */}
-      <div className="w-9 h-9 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-[11px] font-bold shrink-0">
-        {iniciais(lead.nome_lead)}
+      {/* Avatar com ponto indicador pulsante se não lido */}
+      <div className="relative shrink-0">
+        <div className="w-9 h-9 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-[11px] font-bold">
+          {iniciais(lead.nome_lead)}
+        </div>
+        {naoLido && (
+          <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[var(--bg-card)] animate-pulse" />
+        )}
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <span className="font-semibold text-[13px] text-[var(--text-main)] truncate">
+          <span className={`text-[13px] truncate ${naoLido ? 'font-bold text-emerald-400' : 'font-semibold text-[var(--text-main)]'}`}>
             {lead.nome_lead || lead.whatsapp_lead}
           </span>
-          {lead.ultima_mensagem && (
-            <span className="text-[10px] text-[var(--text-muted)] shrink-0">
-              {format(new Date(lead.ultima_mensagem), 'dd/MM HH:mm')}
+          {dataExibicao && (
+            <span className={`text-[10px] shrink-0 ${naoLido ? 'font-bold text-emerald-400' : 'text-[var(--text-muted)]'}`}>
+              {format(dataExibicao, 'dd/MM HH:mm')}
             </span>
           )}
         </div>
-        <p className="text-[12px] text-[var(--text-muted)] truncate mt-0.5">
-          {lead.motivo_contato || 'Sem motivo informado'}
-        </p>
+        <div className="flex items-center justify-between gap-1 mt-0.5">
+          <p className="text-[12px] text-[var(--text-muted)] truncate flex-1">
+            {lead.motivo_contato || 'Sem motivo informado'}
+          </p>
+          {naoLido && (
+            <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shrink-0">
+              Nova
+            </span>
+          )}
+        </div>
         {lead.atendimento_humano_ativo && (
           <span className="inline-flex items-center gap-1 mt-1 text-[10px] px-2 py-0.5 rounded-full bg-[var(--warning-bg)] text-[var(--warning-text)] border border-[var(--warning-border)]">
             <UserCog size={10} /> Atendimento humano
@@ -84,7 +117,6 @@ function ConversaItem({ lead, ativo, onClick }: { lead: LeadAdv; ativo: boolean;
 function Balao({ msg }: { msg: import('../hooks/useChat').ChatwootMessage }) {
   const doLead = msg.message_type === 0
   const nota = msg.private
-  // Bolha com fundo escuro (texto branco) só quando é mensagem enviada e não é nota interna
   const bolhaEscura = !doLead && !nota
 
   return (
@@ -133,8 +165,17 @@ export default function Chat() {
   const [texto, setTexto] = useState('')
   const [arquivoAnexado, setArquivoAnexado] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  // Estado de UI: em mobile mostra lista ou conversa
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
+
+  // Controle de leitura: guarda timestamp de quando a conversa de cada lead foi lida pelo usuário
+  const [vistosMap, setVistosMap] = useState<Record<string, number>>(() => {
+    try {
+      const salvas = localStorage.getItem('chat_leads_vistos')
+      return salvas ? JSON.parse(salvas) : {}
+    } catch {
+      return {}
+    }
+  })
 
   const {
     gravando,
@@ -156,6 +197,26 @@ export default function Chat() {
     assumirAtendimento,
     devolverParaIA,
   } = useChatConversa(leadSelecionado)
+
+  // Marca conversa como lida ao selecionar um lead ou receber mensagem enquanto está aberto
+  const marcarComoLido = useCallback((leadId: string) => {
+    setVistosMap((prev) => {
+      const novo = { ...prev, [leadId]: Date.now() }
+      try {
+        localStorage.setItem('chat_leads_vistos', JSON.stringify(novo))
+      } catch {
+        // Ignora erro de localStorage
+      }
+      return novo
+    })
+  }, [])
+
+  // Marca como lido se a conversa estiver aberta
+  useEffect(() => {
+    if (leadSelecionado?.id) {
+      marcarComoLido(leadSelecionado.id)
+    }
+  }, [leadSelecionado?.id, mensagens.length, marcarComoLido])
 
   const leadsFiltrados = useMemo(() => {
     if (!busca.trim()) return leads
@@ -183,7 +244,7 @@ export default function Chat() {
   const handleSelecionarArquivo = (e: React.ChangeEvent<HTMLInputElement>) => {
     const arquivo = e.target.files?.[0]
     if (arquivo) setArquivoAnexado(arquivo)
-    e.target.value = '' // permite selecionar o mesmo arquivo de novo depois
+    e.target.value = ''
   }
 
   const iniciarGravacaoComTratamento = async () => {
@@ -196,6 +257,7 @@ export default function Chat() {
 
   const handleSelecionarLead = (lead: LeadAdv) => {
     setLeadSelecionado(lead)
+    marcarComoLido(lead.id)
     setMobileView('chat')
   }
 
@@ -211,7 +273,6 @@ export default function Chat() {
       />
 
       <Card noPadding className="flex-1 min-h-0 overflow-hidden">
-        {/* ── Layout: coluna única em mobile, duas em desktop ──────── */}
         <div className="h-full flex flex-col md:grid md:grid-cols-[300px_1fr]">
 
           {/* ── Coluna esquerda: lista de conversas ─────────────────── */}
@@ -233,7 +294,7 @@ export default function Chat() {
               </div>
             </div>
 
-            {/* Lista */}
+            {/* Lista de conversas */}
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
               {carregandoLeads && (
                 <p className="text-[12px] text-[var(--text-muted)] text-center py-8">
@@ -245,14 +306,22 @@ export default function Chat() {
                   Nenhuma conversa encontrada.
                 </p>
               )}
-              {leadsFiltrados.map((lead) => (
-                <ConversaItem
-                  key={lead.id}
-                  lead={lead}
-                  ativo={leadSelecionado?.id === lead.id}
-                  onClick={() => handleSelecionarLead(lead)}
-                />
-              ))}
+              {leadsFiltrados.map((lead) => {
+                const timestampVisto = vistosMap[lead.id] ?? 0
+                // Usa a última mensagem vinda do LEAD (message_type 0) — ignora respostas da IA
+                const timestampMsg = lead.ultimaMensagemDoLeadMs ?? (lead.ultima_mensagem ? new Date(lead.ultima_mensagem).getTime() : 0)
+                const naoLido = timestampMsg > 0 && timestampMsg > timestampVisto && leadSelecionado?.id !== lead.id
+
+                return (
+                  <ConversaItem
+                    key={lead.id}
+                    lead={lead}
+                    ativo={leadSelecionado?.id === lead.id}
+                    naoLido={naoLido}
+                    onClick={() => handleSelecionarLead(lead)}
+                  />
+                )
+              })}
             </div>
           </div>
 
@@ -274,7 +343,6 @@ export default function Chat() {
                 {/* Cabeçalho da conversa */}
                 <div className="px-4 py-3 border-b border-[var(--border-card)] flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
-                    {/* Botão voltar (mobile only) */}
                     <button
                       onClick={handleVoltarLista}
                       className="md:hidden p-1.5 rounded-[8px] hover:bg-[var(--bg-base)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors shrink-0"
@@ -327,7 +395,7 @@ export default function Chat() {
                   ))}
                 </div>
 
-                {/* Preview de anexo pendente (arquivo ou áudio gravado) */}
+                {/* Preview de anexo pendente */}
                 {(arquivoAnexado || audioGravado) && (
                   <div className="px-3 pt-2.5 border-t border-[var(--border-card)]">
                     {audioGravado ? (

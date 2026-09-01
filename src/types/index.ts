@@ -77,6 +77,7 @@ export interface LeadAdv {
   atendimento_humano_ativo: boolean
   atendido_por: string | null
   atendimento_humano_desde: string | null
+  ultimaMensagemDoLeadMs?: number
   // Campos Chatwoot: existem no banco mas NUNCA usar no frontend
 }
 
