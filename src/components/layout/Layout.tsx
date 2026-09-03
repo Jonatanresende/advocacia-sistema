@@ -3,14 +3,16 @@ import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import { X } from 'lucide-react'
+import { useNotificacaoLeads } from '../../hooks/useNotificacaoLeads'
 
 export default function Layout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { temNaoLido } = useNotificacaoLeads()
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[var(--bg-base)]">
       {/* Sidebar — desktop */}
-      <Sidebar className="hidden md:flex" />
+      <Sidebar className="hidden md:flex" temNaoLido={temNaoLido} />
 
       {/* Gaveta mobile */}
       {isMobileMenuOpen && (
@@ -35,6 +37,7 @@ export default function Layout() {
 
             <Sidebar
               className="flex border-r-0"
+              temNaoLido={temNaoLido}
               onNavigate={() => setIsMobileMenuOpen(false)}
             />
           </div>
@@ -43,7 +46,7 @@ export default function Layout() {
 
       {/* Área principal */}
       <div className="flex-1 flex flex-col h-screen min-w-0 overflow-hidden">
-        <Header onMenuClick={() => setIsMobileMenuOpen(true)} />
+        <Header temNaoLido={temNaoLido} onMenuClick={() => setIsMobileMenuOpen(true)} />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
           <div className="mx-auto max-w-7xl w-full">

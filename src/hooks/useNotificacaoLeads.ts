@@ -91,13 +91,55 @@ export function useNotificacaoLeads() {
   const [permissaoNotificacao, setPermissaoNotificacao] = useState<NotificationPermission>(
     typeof Notification !== 'undefined' ? Notification.permission : 'denied'
   )
+  const [temNaoLido, setTemNaoLido] = useState(false)
   const { success } = useToast()
+
+  // Lista de leads guardada em ref para avaliação de mensagens não lidas
+  const leadsListaRef = useRef<LeadSnapshot[]>([])
 
   // Mapa: leadId → timestamp ms da última atualização do lead
   const baselineRef = useRef<Map<string, number>>(new Map())
   // Mapa: leadId → ID da última mensagem do lead (type 0) processada
   const ultimoMsgIdLeadRef = useRef<Map<string, number>>(new Map())
+  // Mapa: leadId → timestamp ms da última mensagem vinda do lead no Chatwoot
+  const ultimaMensagemDoLeadMsRef = useRef<Map<string, number>>(new Map())
   const prontoRef = useRef(false)
+
+  // Avalia se existe algum lead com mensagem mais recente que a data de leitura
+  const atualizarStatusNaoLido = useCallback(() => {
+    let vistos: Record<string, number> = {}
+    try {
+      const salvo = localStorage.getItem('chat_leads_vistos')
+      if (salvo) vistos = JSON.parse(salvo)
+    } catch {
+      // Ignora erro
+    }
+
+    let possuiNaoLido = false
+    for (const lead of leadsListaRef.current) {
+      const timeMsgChatwoot = ultimaMensagemDoLeadMsRef.current.get(lead.id) ?? 0
+      const timeMsgDb = extrairTimeMs(lead.ultima_mensagem)
+      const timeMsg = Math.max(timeMsgChatwoot, timeMsgDb)
+
+      const timeVisto = vistos[lead.id] ?? 0
+      if (timeMsg > 0 && timeMsg > timeVisto) {
+        possuiNaoLido = true
+        break
+      }
+    }
+    setTemNaoLido(possuiNaoLido)
+  }, [])
+
+  // Escuta eventos de atualização dos vistos no localStorage (mesma aba e abas diferentes)
+  useEffect(() => {
+    const handleUpdate = () => atualizarStatusNaoLido()
+    window.addEventListener('storage', handleUpdate)
+    window.addEventListener('chat_vistos_updated', handleUpdate)
+    return () => {
+      window.removeEventListener('storage', handleUpdate)
+      window.removeEventListener('chat_vistos_updated', handleUpdate)
+    }
+  }, [atualizarStatusNaoLido])
 
   const notificarUsuario = useCallback((nomeLead: string | null, whatsapp: string, texto?: string | null) => {
     const nome = nomeLead?.trim() || whatsapp
@@ -120,14 +162,25 @@ export function useNotificacaoLeads() {
       const msgs = data.payload as ChatwootMessage[]
       if (msgs.length === 0) return
 
-      // Filtra TODAS as mensagens enviadas pelo lead (message_type === 0)
+      // Filtra APENAS mensagens enviadas pelo lead (message_type === 0)
       const msgsDoLead = msgs.filter((m) => m.message_type === 0 && !m.private)
       if (msgsDoLead.length === 0) return
 
       // Pega a mensagem mais recente enviada pelo lead
       const ultimaMsgLead = msgsDoLead[msgsDoLead.length - 1]
-      const lastId = ultimoMsgIdLeadRef.current.get(lead.id) ?? 0
+      const timestampMsLead = ultimaMsgLead.created_at ? ultimaMsgLead.created_at * 1000 : Date.now()
+      ultimaMensagemDoLeadMsRef.current.set(lead.id, timestampMsLead)
+      atualizarStatusNaoLido()
 
+      const lastId = ultimoMsgIdLeadRef.current.get(lead.id)
+
+      // Se é a primeira vez verificando este lead, registra o ID sem alertar (baseline)
+      if (lastId === undefined) {
+        ultimoMsgIdLeadRef.current.set(lead.id, ultimaMsgLead.id)
+        return
+      }
+
+      // Se chegou um novo ID de mensagem vindo do lead
       if (ultimaMsgLead.id > lastId) {
         ultimoMsgIdLeadRef.current.set(lead.id, ultimaMsgLead.id)
 
@@ -138,40 +191,60 @@ export function useNotificacaoLeads() {
     } catch {
       // Ignora erro temporário
     }
-  }, [notificarUsuario])
+  }, [notificarUsuario, atualizarStatusNaoLido])
 
   const processarSnapshot = useCallback((lead: LeadSnapshot) => {
     if (!prontoRef.current) return
 
-    const timeAtual = extrairTimeMs(lead.ultima_mensagem)
-    if (timeAtual === 0) return
-
-    const timeAnterior = baselineRef.current.get(lead.id) ?? 0
-
-    if (timeAtual > timeAnterior) {
-      baselineRef.current.set(lead.id, timeAtual)
-      verificarMensagensLead(lead, true)
+    // Atualiza a lista guardada na ref
+    const idx = leadsListaRef.current.findIndex((l) => l.id === lead.id)
+    if (idx >= 0) {
+      leadsListaRef.current[idx] = lead
+    } else {
+      leadsListaRef.current.push(lead)
     }
-  }, [verificarMensagensLead])
+    atualizarStatusNaoLido()
 
-  // ─── 1. Carga inicial INSTANTÂNEA de baseline ───────────────────────────
+    // Verifica se chegou mensagem nova do lead no Chatwoot
+    verificarMensagensLead(lead, true)
+  }, [verificarMensagensLead, atualizarStatusNaoLido])
+
+  // ─── 1. Carga inicial de baseline ────────────────────────────────────────
   useEffect(() => {
-    supabase
-      .from('leads_adv')
-      .select('id, ultima_mensagem, nome_lead, whatsapp_lead, id_conversa_chatwoot')
-      .not('id_conversa_chatwoot', 'is', null)
-      .then(({ data }) => {
-        if (data) {
+    let cancelado = false
+
+    const inicializarBaseline = async () => {
+      try {
+        const { data } = await supabase
+          .from('leads_adv')
+          .select('id, ultima_mensagem, nome_lead, whatsapp_lead, id_conversa_chatwoot')
+          .not('id_conversa_chatwoot', 'is', null)
+
+        if (data && !cancelado) {
           const leads = data as LeadSnapshot[]
+          leadsListaRef.current = leads
+
           for (const row of leads) {
             const time = extrairTimeMs(row.ultima_mensagem)
             baselineRef.current.set(row.id, time)
+            // Popula baseline de mensagens do lead sem tocar alerta
+            verificarMensagensLead(row, false)
           }
+
+          atualizarStatusNaoLido()
         }
-        // Baseline pronto imediatamente (sem aguardar dezenas de chamadas HTTP)
-        prontoRef.current = true
-      })
-  }, [])
+      } finally {
+        if (!cancelado) {
+          prontoRef.current = true
+        }
+      }
+    }
+
+    inicializarBaseline()
+    return () => {
+      cancelado = true
+    }
+  }, [verificarMensagensLead, atualizarStatusNaoLido])
 
   // ─── 2. Realtime (Supabase WebSocket instantâneo) ──────────────────────
   useEffect(() => {
@@ -195,7 +268,7 @@ export function useNotificacaoLeads() {
     }
   }, [processarSnapshot])
 
-  // ─── 3. Polling ultrarrápido de 2 segundos ─────────────────────────────
+  // ─── 3. Polling rápido de 2.5 segundos para detectar mensagem antes da IA ─────────────
   useEffect(() => {
     const poll = async () => {
       if (!prontoRef.current) return
@@ -206,18 +279,22 @@ export function useNotificacaoLeads() {
           .not('id_conversa_chatwoot', 'is', null)
 
         if (data) {
-          for (const lead of data as LeadSnapshot[]) {
-            processarSnapshot(lead)
+          const leads = data as LeadSnapshot[]
+          leadsListaRef.current = leads
+          for (const lead of leads) {
+            // Checa diretamente se o lead enviou nova mensagem no Chatwoot
+            verificarMensagensLead(lead, true)
           }
+          atualizarStatusNaoLido()
         }
       } catch {
         // Polling silencioso
       }
     }
 
-    const interval = setInterval(poll, 2000)
+    const interval = setInterval(poll, 2500)
     return () => clearInterval(interval)
-  }, [processarSnapshot])
+  }, [verificarMensagensLead, atualizarStatusNaoLido])
 
   // ─── Permissão do Navegador ─────────────────────────────────────────────
   const solicitarPermissao = useCallback(async () => {
@@ -231,5 +308,6 @@ export function useNotificacaoLeads() {
     notificarUsuario('Lead de Teste', '(11) 99999-9999', 'Olá, gostaria de agendar um atendimento.')
   }, [notificarUsuario])
 
-  return { permissaoNotificacao, solicitarPermissao, testarNotificacao }
+  return { permissaoNotificacao, solicitarPermissao, testarNotificacao, temNaoLido }
 }
+

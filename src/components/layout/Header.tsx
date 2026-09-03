@@ -2,17 +2,21 @@ import { Menu, Scale } from 'lucide-react'
 
 interface HeaderProps {
   onMenuClick: () => void
+  temNaoLido?: boolean
 }
 
-export default function Header({ onMenuClick }: HeaderProps) {
+export default function Header({ onMenuClick, temNaoLido }: HeaderProps) {
   return (
     <header className="h-[60px] bg-[var(--bg-sidebar)] border-b border-[var(--sidebar-border)] flex items-center px-4 md:hidden shrink-0 z-30 sticky top-0">
       <button
         onClick={onMenuClick}
         aria-label="Abrir menu"
-        className="p-2 rounded-[8px] text-[var(--sidebar-text)] opacity-70 hover:opacity-100 hover:bg-[var(--sidebar-hover-bg)] transition-colors"
+        className="relative p-2 rounded-[8px] text-[var(--sidebar-text)] opacity-70 hover:opacity-100 hover:bg-[var(--sidebar-hover-bg)] transition-colors"
       >
         <Menu size={20} />
+        {temNaoLido && (
+          <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[var(--bg-sidebar)] animate-pulse" />
+        )}
       </button>
 
       <div className="flex items-center gap-2.5 ml-3">

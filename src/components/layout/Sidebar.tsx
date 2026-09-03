@@ -52,6 +52,7 @@ const adminItems = [
 
 interface SidebarProps {
   className?: string
+  temNaoLido?: boolean
   onNavigate?: () => void
 }
 
@@ -59,13 +60,17 @@ function NavItem({
   to,
   icon: Icon,
   label,
+  temNaoLido,
   onNavigate,
 }: {
   to: string
   icon: React.ElementType
   label: string
+  temNaoLido?: boolean
   onNavigate?: () => void
 }) {
+  const exibeAnimacaoNaoLido = to === '/chat' && temNaoLido
+
   return (
     <NavLink
       to={to}
@@ -86,21 +91,37 @@ function NavItem({
           {isActive && (
             <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[var(--brand)] rounded-r-full" />
           )}
-          <Icon
-            size={16}
-            className={clsx(
-              'shrink-0 transition-transform duration-150',
-              'group-hover:translate-x-0.5'
+
+          {/* Ícone com ponto pulsante em verde caso haja mensagem não lida */}
+          <div className="relative shrink-0 flex items-center justify-center">
+            <Icon
+              size={16}
+              className={clsx(
+                'shrink-0 transition-transform duration-150',
+                'group-hover:translate-x-0.5'
+              )}
+            />
+            {exibeAnimacaoNaoLido && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[var(--bg-sidebar)] animate-pulse" />
             )}
-          />
-          <span>{label}</span>
+          </div>
+
+          <span className="flex-1 truncate">{label}</span>
+
+          {/* Tag / ponto pulsante no lado direito caso haja mensagem não lida */}
+          {exibeAnimacaoNaoLido && (
+            <span className="relative flex h-2 w-2 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+          )}
         </>
       )}
     </NavLink>
   )
 }
 
-export default function Sidebar({ className, onNavigate }: SidebarProps) {
+export default function Sidebar({ className, temNaoLido, onNavigate }: SidebarProps) {
   const { theme, toggleTheme } = useTheme()
   const { perfil, isAdmin, permissoes, signOut } = useAuth()
   const navigate = useNavigate()
@@ -155,6 +176,7 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
                   to={item.to}
                   icon={item.icon}
                   label={item.label}
+                  temNaoLido={temNaoLido}
                   onNavigate={onNavigate}
                 />
               ))}
@@ -174,6 +196,7 @@ export default function Sidebar({ className, onNavigate }: SidebarProps) {
                 to={item.to}
                 icon={item.icon}
                 label={item.label}
+                temNaoLido={temNaoLido}
                 onNavigate={onNavigate}
               />
             ))}

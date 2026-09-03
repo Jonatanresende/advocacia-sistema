@@ -204,6 +204,7 @@ export default function Chat() {
       const novo = { ...prev, [leadId]: Date.now() }
       try {
         localStorage.setItem('chat_leads_vistos', JSON.stringify(novo))
+        window.dispatchEvent(new CustomEvent('chat_vistos_updated'))
       } catch {
         // Ignora erro de localStorage
       }
