@@ -23,8 +23,15 @@ export function useChatLeads() {
   const [leads, setLeads] = useState<LeadAdv[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const { error } = useToast()
+  // Evita que um novo ciclo comece antes do anterior terminar. Sem essa trava,
+  // se o Chatwoot demorar mais que o intervalo do polling, as chamadas (uma
+  // por lead) se empilham indefinidamente e entopem a fila de rede do
+  // navegador — inclusive travando outras requisições manuais do usuário.
+  const emAndamentoRef = useRef(false)
 
   const fetchLeads = useCallback(async () => {
+    if (emAndamentoRef.current) return
+    emAndamentoRef.current = true
     try {
       const { data, error: err } = await supabase
         .from('leads_adv')
@@ -67,13 +74,17 @@ export function useChatLeads() {
       error('Não foi possível carregar a lista de conversas.')
     } finally {
       setIsLoading(false)
+      emAndamentoRef.current = false
     }
   }, [error])
 
   useEffect(() => {
     fetchLeads()
-    // Atualiza a lista a cada 3 segundos para resposta super rápida
-    const interval = setInterval(fetchLeads, 3000)
+    // Intervalo mais espaçado: o Realtime abaixo já cobre a atualização
+    // instantânea a cada mudança real no banco. Esse polling é só uma rede
+    // de segurança — não precisa ser agressivo, ainda mais fazendo 1
+    // requisição ao Chatwoot por lead a cada execução.
+    const interval = setInterval(fetchLeads, 10000)
 
     // Inscreve no Realtime para atualização instantânea em tempo real
     const channel = supabase
@@ -103,10 +114,18 @@ export function useChatConversa(lead: LeadAdv | null) {
   const [isSending, setIsSending] = useState(false)
   const [atendimentoHumanoAtivo, setAtendimentoHumanoAtivo] = useState(false)
   const [atendidoPor, setAtendidoPor] = useState<string | null>(null)
+  const [isLoadingMais, setIsLoadingMais] = useState(false)
+  const [temMaisAntigas, setTemMaisAntigas] = useState(true)
   const { error, success } = useToast()
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Mesma trava do useChatLeads: se o Chatwoot demorar mais que o intervalo
+  // do polling, evita empilhar chamadas novas por cima das que ainda não
+  // terminaram.
+  const emAndamentoRef = useRef(false)
 
   const fetchMensagens = useCallback(async (leadId: string, silencioso = false) => {
+    if (silencioso && emAndamentoRef.current) return
+    emAndamentoRef.current = true
     if (!silencioso) setIsLoading(true)
     try {
       const { data, error: err } = await supabase.functions.invoke('chatwoot-proxy', {
@@ -114,13 +133,58 @@ export function useChatConversa(lead: LeadAdv | null) {
       })
       if (err) throw err
       if (data?.error) throw new Error(data.error)
-      setMensagens((data?.payload as ChatwootMessage[]) ?? [])
+      // Notas internas do Chatwoot (message_type 2 — ex: mensagens de sistema
+      // como erros do agent bot) nunca fazem parte da conversa com o lead.
+      const todasMsgs = (data?.payload as ChatwootMessage[]) ?? []
+      const recentes = todasMsgs.filter((m) => m.message_type !== 2)
+      setMensagens((atuais) => {
+        // Troca de conversa (não-silencioso) começa do zero.
+        if (!silencioso || atuais.length === 0) return recentes
+        // Polling silencioso: mescla com o que já está na tela — inclusive
+        // páginas antigas trazidas por "carregar mensagens anteriores" —
+        // em vez de substituir tudo e apagar esse histórico.
+        const mapa = new Map(atuais.map((m) => [m.id, m]))
+        for (const m of recentes) mapa.set(m.id, m)
+        return Array.from(mapa.values()).sort((a, b) => a.created_at - b.created_at)
+      })
+      // "Tem mais antigas" só é recalculado na carga inicial da conversa —
+      // o polling só atualiza a ponta recente e não deve mexer nisso.
+      if (!silencioso) setTemMaisAntigas(todasMsgs.length >= 20)
     } catch {
       if (!silencioso) error('Não foi possível carregar as mensagens dessa conversa.')
     } finally {
       if (!silencioso) setIsLoading(false)
+      emAndamentoRef.current = false
     }
   }, [error])
+
+  // Busca a página anterior (mensagens mais antigas que a mais antiga já carregada)
+  // e prepende na lista, sem duplicar e sem perder o filtro de notas internas.
+  const carregarMensagensAntigas = useCallback(async () => {
+    if (!lead || isLoadingMais || !temMaisAntigas || mensagens.length === 0) return
+    setIsLoadingMais(true)
+    try {
+      const maisAntiga = mensagens[0]
+      const { data, error: err } = await supabase.functions.invoke('chatwoot-proxy', {
+        body: { action: 'buscar_mensagens', lead_id: lead.id, before: maisAntiga.id },
+      })
+      if (err) throw err
+      if (data?.error) throw new Error(data.error)
+      const pagina = ((data?.payload as ChatwootMessage[]) ?? []).filter((m) => m.message_type !== 2)
+      setTemMaisAntigas(pagina.length >= 20)
+      if (pagina.length > 0) {
+        setMensagens((atuais) => {
+          const idsExistentes = new Set(atuais.map((m) => m.id))
+          const novas = pagina.filter((m) => !idsExistentes.has(m.id))
+          return [...novas, ...atuais]
+        })
+      }
+    } catch {
+      error('Não foi possível carregar mensagens anteriores.')
+    } finally {
+      setIsLoadingMais(false)
+    }
+  }, [lead, mensagens, isLoadingMais, temMaisAntigas, error])
 
   useEffect(() => {
     if (pollingRef.current) clearInterval(pollingRef.current)
@@ -152,9 +216,9 @@ export function useChatConversa(lead: LeadAdv | null) {
         formData.append('lead_id', lead.id)
         if (texto.trim()) formData.append('texto', texto.trim())
         formData.append('anexo', arquivo, arquivo.name)
-        ;({ data, error: err } = await supabase.functions.invoke('chatwoot-proxy', { body: formData }))
+          ; ({ data, error: err } = await supabase.functions.invoke('chatwoot-proxy', { body: formData }))
       } else {
-        ;({ data, error: err } = await supabase.functions.invoke('chatwoot-proxy', {
+        ; ({ data, error: err } = await supabase.functions.invoke('chatwoot-proxy', {
           body: { action: 'enviar_mensagem', lead_id: lead.id, texto },
         }))
       }
@@ -207,6 +271,9 @@ export function useChatConversa(lead: LeadAdv | null) {
     mensagens,
     isLoading,
     isSending,
+    isLoadingMais,
+    temMaisAntigas,
+    carregarMensagensAntigas,
     atendimentoHumanoAtivo,
     atendidoPor,
     enviarMensagem,

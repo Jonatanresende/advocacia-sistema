@@ -65,13 +65,12 @@ function ConversaItem({
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left p-3 rounded-[10px] flex items-center gap-3 transition-all duration-150 relative ${
-        ativo
+      className={`w-full text-left p-3 rounded-[10px] flex items-center gap-3 transition-all duration-150 relative ${ativo
           ? 'bg-[var(--primary)]/10 border border-[var(--primary)]/30'
           : naoLido
-          ? 'bg-emerald-500/10 border border-emerald-500/40 shadow-sm'
-          : 'hover:bg-[var(--bg-base)] border border-transparent'
-      }`}
+            ? 'bg-emerald-500/10 border border-emerald-500/40 shadow-sm'
+            : 'hover:bg-[var(--bg-base)] border border-transparent'
+        }`}
     >
       {/* Avatar com ponto indicador pulsante se não lido */}
       <div className="relative shrink-0">
@@ -122,13 +121,12 @@ function Balao({ msg }: { msg: import('../hooks/useChat').ChatwootMessage }) {
   return (
     <div className={`flex ${doLead ? 'justify-start' : 'justify-end'} mb-3`}>
       <div
-        className={`max-w-[78%] rounded-[14px] px-3.5 py-2.5 text-[13.5px] whitespace-pre-wrap break-words ${
-          nota
+        className={`max-w-[78%] rounded-[14px] px-3.5 py-2.5 text-[13.5px] whitespace-pre-wrap break-words ${nota
             ? 'bg-[var(--warning-bg)] border border-[var(--warning-border)] text-[var(--text-main)]'
             : doLead
               ? 'bg-[var(--bg-base)] border border-[var(--border-card)] text-[var(--text-main)]'
               : 'bg-[var(--primary)] text-white'
-        }`}
+          }`}
       >
         {msg.content ||
           (!msg.attachments?.length && <span className="italic opacity-70">(sem texto)</span>)}
@@ -191,6 +189,9 @@ export default function Chat() {
     mensagens,
     isLoading: carregandoMensagens,
     isSending,
+    isLoadingMais,
+    temMaisAntigas,
+    carregarMensagensAntigas,
     atendimentoHumanoAtivo,
     atendidoPor,
     enviarMensagem,
@@ -278,9 +279,8 @@ export default function Chat() {
 
           {/* ── Coluna esquerda: lista de conversas ─────────────────── */}
           <div
-            className={`border-r border-[var(--border-card)] flex flex-col min-h-0 ${
-              mobileView === 'list' ? 'flex' : 'hidden md:flex'
-            }`}
+            className={`border-r border-[var(--border-card)] flex flex-col min-h-0 ${mobileView === 'list' ? 'flex' : 'hidden md:flex'
+              }`}
           >
             {/* Search */}
             <div className="p-3 border-b border-[var(--border-card)]">
@@ -328,9 +328,8 @@ export default function Chat() {
 
           {/* ── Coluna direita: conversa aberta ─────────────────────── */}
           <div
-            className={`flex flex-col min-h-0 ${
-              mobileView === 'chat' ? 'flex' : 'hidden md:flex'
-            }`}
+            className={`flex flex-col min-h-0 ${mobileView === 'chat' ? 'flex' : 'hidden md:flex'
+              }`}
           >
             {!leadSelecionado ? (
               <div className="flex-1 flex flex-col items-center justify-center text-[var(--text-muted)] gap-3">
@@ -391,6 +390,17 @@ export default function Chat() {
                   {!carregandoMensagens && mensagens.length === 0 && (
                     <p className="text-[12px] text-[var(--text-muted)] text-center py-8">Nenhuma mensagem ainda.</p>
                   )}
+                  {!carregandoMensagens && mensagens.length > 0 && temMaisAntigas && (
+                    <div className="text-center pb-3">
+                      <button
+                        onClick={carregarMensagensAntigas}
+                        disabled={isLoadingMais}
+                        className="text-[11.5px] text-[var(--primary)] hover:underline disabled:opacity-50"
+                      >
+                        {isLoadingMais ? 'Carregando...' : 'Carregar mensagens anteriores'}
+                      </button>
+                    </div>
+                  )}
                   {mensagens.map((msg) => (
                     <Balao key={msg.id} msg={msg} />
                   ))}
@@ -433,9 +443,8 @@ export default function Chat() {
 
                 {/* Input de envio */}
                 <div
-                  className={`p-3 flex items-end gap-2 ${
-                    arquivoAnexado || audioGravado ? '' : 'border-t border-[var(--border-card)]'
-                  }`}
+                  className={`p-3 flex items-end gap-2 ${arquivoAnexado || audioGravado ? '' : 'border-t border-[var(--border-card)]'
+                    }`}
                 >
                   <input
                     ref={fileInputRef}

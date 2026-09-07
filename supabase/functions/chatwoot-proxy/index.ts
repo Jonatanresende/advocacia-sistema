@@ -64,6 +64,7 @@ Deno.serve(async (req) => {
   let lead_id: string
   let texto: string | undefined
   let anexo: File | null = null
+  let before: string | number | undefined
 
   if (contentType.includes('multipart/form-data')) {
     const form = await req.formData()
@@ -78,6 +79,7 @@ Deno.serve(async (req) => {
     action = body.action
     lead_id = body.lead_id
     texto = body.texto
+    before = body.before
   }
 
   if (!action || !lead_id) {
@@ -105,7 +107,10 @@ Deno.serve(async (req) => {
 
   // ─── Ação: buscar mensagens da conversa ───────────────────────
   if (action === 'buscar_mensagens') {
-    const resp = await fetch(`${conversationUrl}/messages`, {
+    const url = before
+      ? `${conversationUrl}/messages?before=${encodeURIComponent(before)}`
+      : `${conversationUrl}/messages`
+    const resp = await fetch(url, {
       headers: { api_access_token: CHATWOOT_API_TOKEN },
     })
     const data = await resp.json()
