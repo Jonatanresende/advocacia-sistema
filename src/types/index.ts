@@ -95,6 +95,8 @@ export interface OfficeConfig {
   nome: string
   logo_url: string | null
   favicon_url: string | null
+  ia_pausada_global: boolean
+  pausar_horario_comercial_ativo: boolean
   updated_at: string
 }
 

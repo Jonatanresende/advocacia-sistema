@@ -6,7 +6,7 @@ import Button from '../components/ui/Button'
 import { supabase } from '../lib/supabase'
 import type { OfficeConfig, OfficeHours, DiaSemana, PermissaoRole } from '../types'
 import { useToast } from '../contexts/ToastContext'
-import { Building2, Clock, Shield } from 'lucide-react'
+import { Building2, Clock, Shield, Bot } from 'lucide-react'
 import clsx from 'clsx'
 
 const DIAS_ORDEM: DiaSemana[] = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
@@ -44,7 +44,7 @@ export default function Configuracoes() {
       })
 
       const hoursMap: Partial<Record<DiaSemana, OfficeHours>> = {}
-      ;(hoursRes.data as OfficeHours[]).forEach(h => { hoursMap[h.dia] = h })
+        ; (hoursRes.data as OfficeHours[]).forEach(h => { hoursMap[h.dia] = h })
       setHours(hoursMap)
 
       setPermissions((permissionsRes.data as PermissaoRole[]) || [])
@@ -75,7 +75,14 @@ export default function Configuracoes() {
     try {
       const { error: err } = await supabase
         .from('office_config')
-        .update({ nome: config.nome, logo_url: config.logo_url, favicon_url: config.favicon_url, updated_at: new Date().toISOString() })
+        .update({
+          nome: config.nome,
+          logo_url: config.logo_url,
+          favicon_url: config.favicon_url,
+          ia_pausada_global: config.ia_pausada_global,
+          pausar_horario_comercial_ativo: config.pausar_horario_comercial_ativo,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', 1)
       if (err) throw err
       success('Informações do escritório salvas')
@@ -179,6 +186,64 @@ export default function Configuracoes() {
             </div>
           )}
         </Card>
+        {/* Seção - Atendimento com IA */}
+        <Card className="flex flex-col gap-6 shadow-none !border-[var(--border-card)] rounded-[14px] p-6">
+          <h3 className="font-semibold text-[16px] text-[var(--text-main)] font-display flex items-center gap-2.5 border-b border-[var(--border-card)] pb-4">
+            <Bot size={18} className="text-[var(--primary)]" />
+            Atendimento com IA
+          </h3>
+          <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
+            Controle quando a secretária IA responde automaticamente no WhatsApp. Essas opções afetam todos os leads em tempo real.
+          </p>
+
+          {config && (
+            <div className="flex flex-col gap-4 max-w-lg">
+              {/* Toggle 1 - Pausa global */}
+              <div className="flex items-center justify-between bg-[var(--bg-base)]/50 p-4 rounded-[12px] border border-[var(--border-card)]">
+                <div className="flex flex-col">
+                  <span className="font-semibold text-[13px] text-[var(--text-main)]">Pausar IA para todos os leads</span>
+                  <span className="text-[11px] text-[var(--text-muted)]">Desliga a IA completamente, independente do horário ou do lead</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={config.ia_pausada_global}
+                    onChange={(e) => setConfig({ ...config, ia_pausada_global: e.target.checked })}
+                  />
+                  <div className={clsx(
+                    "w-11 h-6 rounded-full relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--border-card)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white",
+                    config.ia_pausada_global ? "bg-[var(--primary)]" : "bg-[var(--border-card)]"
+                  )}></div>
+                </label>
+              </div>
+
+              {/* Toggle 2 - Regra de horário comercial */}
+              <div className="flex items-center justify-between bg-[var(--bg-base)]/50 p-4 rounded-[12px] border border-[var(--border-card)]">
+                <div className="flex flex-col">
+                  <span className="font-semibold text-[13px] text-[var(--text-main)]">Pausar IA em horário comercial</span>
+                  <span className="text-[11px] text-[var(--text-muted)]">Usa os dias e horários definidos na seção "Horário de Funcionamento" abaixo</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    className="sr-only peer"
+                    checked={config.pausar_horario_comercial_ativo}
+                    onChange={(e) => setConfig({ ...config, pausar_horario_comercial_ativo: e.target.checked })}
+                  />
+                  <div className={clsx(
+                    "w-11 h-6 rounded-full relative after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[var(--border-card)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white",
+                    config.pausar_horario_comercial_ativo ? "bg-[var(--primary)]" : "bg-[var(--border-card)]"
+                  )}></div>
+                </label>
+              </div>
+
+              <div className="pt-2">
+                <Button onClick={saveConfig} isLoading={isSavingConfig}>Salvar Configurações</Button>
+              </div>
+            </div>
+          )}
+        </Card>
 
         {/* Seção 2 - Permissões de Acesso */}
         <Card className="flex flex-col gap-6 shadow-none !border-[var(--border-card)] rounded-[14px] p-6">
@@ -209,7 +274,7 @@ export default function Configuracoes() {
                     <span className="font-semibold text-[13px] text-[var(--text-main)]">{label}</span>
                     <span className="text-[11px] text-[var(--text-muted)]">{rota}</span>
                   </div>
-                  
+
                   {/* Toggle Advogado */}
                   <div className="col-span-3 w-full flex items-center justify-center">
                     {permAdv && (
