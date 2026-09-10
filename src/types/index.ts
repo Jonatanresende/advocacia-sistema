@@ -81,6 +81,7 @@ export interface LeadAdv {
   categoria_video_enviado?: string | null
   legenda_enviada?: string | null
   ultimaMensagemDoLeadMs?: number
+  visto_em?: string | null
   // Campos Chatwoot: existem no banco mas NUNCA usar no frontend
 }
 

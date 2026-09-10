@@ -9,6 +9,7 @@ type LeadSnapshot = {
   whatsapp_lead: string
   ultima_mensagem: string | null
   id_conversa_chatwoot: number | null
+  visto_em: string | null
 }
 
 /**
@@ -106,22 +107,15 @@ export function useNotificacaoLeads() {
   const prontoRef = useRef(false)
 
   // Avalia se existe algum lead com mensagem mais recente que a data de leitura
+  // Usa o campo visto_em do próprio lead (servidor), sem depender de localStorage
   const atualizarStatusNaoLido = useCallback(() => {
-    let vistos: Record<string, number> = {}
-    try {
-      const salvo = localStorage.getItem('chat_leads_vistos')
-      if (salvo) vistos = JSON.parse(salvo)
-    } catch {
-      // Ignora erro
-    }
-
     let possuiNaoLido = false
     for (const lead of leadsListaRef.current) {
       const timeMsgChatwoot = ultimaMensagemDoLeadMsRef.current.get(lead.id) ?? 0
       const timeMsgDb = extrairTimeMs(lead.ultima_mensagem)
       const timeMsg = Math.max(timeMsgChatwoot, timeMsgDb)
 
-      const timeVisto = vistos[lead.id] ?? 0
+      const timeVisto = extrairTimeMs(lead.visto_em)
       if (timeMsg > 0 && timeMsg > timeVisto) {
         possuiNaoLido = true
         break
@@ -130,15 +124,20 @@ export function useNotificacaoLeads() {
     setTemNaoLido(possuiNaoLido)
   }, [])
 
-  // Escuta eventos de atualização dos vistos no localStorage (mesma aba e abas diferentes)
-  useEffect(() => {
-    const handleUpdate = () => atualizarStatusNaoLido()
-    window.addEventListener('storage', handleUpdate)
-    window.addEventListener('chat_vistos_updated', handleUpdate)
-    return () => {
-      window.removeEventListener('storage', handleUpdate)
-      window.removeEventListener('chat_vistos_updated', handleUpdate)
+  // Marca conversa como lida gravando visto_em no banco (sincroniza entre sessões)
+  const marcarComoLido = useCallback(async (leadId: string) => {
+    const agora = new Date().toISOString()
+    // Atualiza localmente na ref para feedback imediato (sem esperar o Realtime)
+    const idx = leadsListaRef.current.findIndex((l) => l.id === leadId)
+    if (idx >= 0) {
+      leadsListaRef.current[idx] = { ...leadsListaRef.current[idx], visto_em: agora }
     }
+    atualizarStatusNaoLido()
+    // Persiste no servidor
+    await supabase
+      .from('leads_adv')
+      .update({ visto_em: agora })
+      .eq('id', leadId)
   }, [atualizarStatusNaoLido])
 
   const notificarUsuario = useCallback((nomeLead: string | null, whatsapp: string, texto?: string | null) => {
@@ -217,7 +216,7 @@ export function useNotificacaoLeads() {
       try {
         const { data } = await supabase
           .from('leads_adv')
-          .select('id, ultima_mensagem, nome_lead, whatsapp_lead, id_conversa_chatwoot')
+          .select('id, ultima_mensagem, nome_lead, whatsapp_lead, id_conversa_chatwoot, visto_em')
           .not('id_conversa_chatwoot', 'is', null)
 
         if (data && !cancelado) {
@@ -275,7 +274,7 @@ export function useNotificacaoLeads() {
       try {
         const { data } = await supabase
           .from('leads_adv')
-          .select('id, ultima_mensagem, nome_lead, whatsapp_lead, id_conversa_chatwoot')
+          .select('id, ultima_mensagem, nome_lead, whatsapp_lead, id_conversa_chatwoot, visto_em')
           .not('id_conversa_chatwoot', 'is', null)
 
         if (data) {
@@ -308,6 +307,6 @@ export function useNotificacaoLeads() {
     notificarUsuario('Lead de Teste', '(11) 99999-9999', 'Olá, gostaria de agendar um atendimento.')
   }, [notificarUsuario])
 
-  return { permissaoNotificacao, solicitarPermissao, testarNotificacao, temNaoLido }
+  return { permissaoNotificacao, solicitarPermissao, testarNotificacao, temNaoLido, marcarComoLido }
 }
 

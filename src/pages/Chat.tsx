@@ -5,6 +5,7 @@ import Button from '../components/ui/Button'
 import { useAuth } from '../contexts/AuthContext'
 import { useChatLeads, useChatConversa } from '../hooks/useChat'
 import { useGravadorAudio } from '../hooks/useGravadorAudio'
+import { supabase } from '../lib/supabase'
 import type { LeadAdv } from '../types'
 import { format } from 'date-fns'
 import {
@@ -247,16 +248,6 @@ export default function Chat() {
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
   const [midiaModal, setMidiaModal] = useState<MediaPreview | null>(null)
 
-  // Controle de leitura: guarda timestamp de quando a conversa de cada lead foi lida pelo usuário
-  const [vistosMap, setVistosMap] = useState<Record<string, number>>(() => {
-    try {
-      const salvas = localStorage.getItem('chat_leads_vistos')
-      return salvas ? JSON.parse(salvas) : {}
-    } catch {
-      return {}
-    }
-  })
-
   const {
     gravando,
     tempoGravacao,
@@ -281,21 +272,15 @@ export default function Chat() {
     devolverParaIA,
   } = useChatConversa(leadSelecionado)
 
-  // Marca conversa como lida ao selecionar um lead ou receber mensagem enquanto está aberto
-  const marcarComoLido = useCallback((leadId: string) => {
-    setVistosMap((prev) => {
-      const novo = { ...prev, [leadId]: Date.now() }
-      try {
-        localStorage.setItem('chat_leads_vistos', JSON.stringify(novo))
-        window.dispatchEvent(new CustomEvent('chat_vistos_updated'))
-      } catch {
-        // Ignora erro de localStorage
-      }
-      return novo
-    })
+  // Marca conversa como lida gravando visto_em no Supabase (sincroniza entre sessões)
+  const marcarComoLido = useCallback(async (leadId: string) => {
+    await supabase
+      .from('leads_adv')
+      .update({ visto_em: new Date().toISOString() })
+      .eq('id', leadId)
   }, [])
 
-  // Marca como lido se a conversa estiver aberta
+  // Marca como lido se a conversa estiver aberta (ao abrir ou ao chegar nova msg)
   useEffect(() => {
     if (leadSelecionado?.id) {
       marcarComoLido(leadSelecionado.id)
@@ -400,10 +385,10 @@ export default function Chat() {
                 </p>
               )}
               {leadsFiltrados.map((lead) => {
-                const timestampVisto = vistosMap[lead.id] ?? 0
-                // Usa a última mensagem vinda do LEAD (message_type 0) — ignora respostas da IA
+                // Compara a última mensagem do lead com o campo visto_em vindo do banco
+                const timeVisto = lead.visto_em ? new Date(lead.visto_em).getTime() : 0
                 const timestampMsg = lead.ultimaMensagemDoLeadMs ?? (lead.ultima_mensagem ? new Date(lead.ultima_mensagem).getTime() : 0)
-                const naoLido = timestampMsg > 0 && timestampMsg > timestampVisto && leadSelecionado?.id !== lead.id
+                const naoLido = timestampMsg > 0 && timestampMsg > timeVisto && leadSelecionado?.id !== lead.id
 
                 return (
                   <ConversaItem
