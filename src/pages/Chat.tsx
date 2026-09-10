@@ -123,6 +123,21 @@ type MediaPreview = {
   nome?: string
 }
 
+// Converte markdown inline (**negrito**, _itálico_) em elementos React
+function renderTexto(texto: string): React.ReactNode[] {
+  // Regex que captura **negrito** ou _itálico_
+  const partes = texto.split(/(\*\*[^*]+\*\*|_[^_]+_)/g)
+  return partes.map((parte, i) => {
+    if (parte.startsWith('**') && parte.endsWith('**')) {
+      return <strong key={i}>{parte.slice(2, -2)}</strong>
+    }
+    if (parte.startsWith('_') && parte.endsWith('_') && parte.length > 2) {
+      return <em key={i}>{parte.slice(1, -1)}</em>
+    }
+    return parte
+  })
+}
+
 function Balao({
   msg,
   onPreviewMedia,
@@ -144,8 +159,9 @@ function Balao({
             : 'bg-[var(--primary)] text-white'
           }`}
       >
-        {msg.content ||
-          (!msg.attachments?.length && <span className="italic opacity-70">(sem texto)</span>)}
+        {msg.content
+          ? renderTexto(msg.content)
+          : (!msg.attachments?.length && <span className="italic opacity-70">(sem texto)</span>)}
         {msg.attachments?.map((att) => {
           const isAudio = att.file_type === 'audio'
           const isVideo = att.file_type === 'video'
