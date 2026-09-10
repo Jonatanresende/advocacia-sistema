@@ -99,11 +99,18 @@ Deno.serve(async (req) => {
     return json({ error: 'Lead não encontrado ou sem permissão de acesso' }, 403)
   }
 
-  if (!lead.id_conta_chatwoot || !lead.id_conversa_chatwoot) {
+  if (!lead.id_conversa_chatwoot) {
     return json({ error: 'Esse lead ainda não tem conversa vinculada no Chatwoot' }, 400)
   }
 
-  const conversationUrl = `${CHATWOOT_BASE_URL}/api/v1/accounts/${lead.id_conta_chatwoot}/conversations/${lead.id_conversa_chatwoot}`
+  const accountId = lead.id_conta_chatwoot || Deno.env.get('CHATWOOT_ACCOUNT_ID') || '1'
+
+  // Se id_conta_chatwoot estiver nulo no banco, preenche automaticamente para não falhar nas próximas chamadas
+  if (!lead.id_conta_chatwoot) {
+    supabaseAdmin.from('leads_adv').update({ id_conta_chatwoot: accountId }).eq('id', lead.id).then(() => {})
+  }
+
+  const conversationUrl = `${CHATWOOT_BASE_URL}/api/v1/accounts/${accountId}/conversations/${lead.id_conversa_chatwoot}`
 
   // ─── Ação: buscar mensagens da conversa ───────────────────────
   if (action === 'buscar_mensagens') {

@@ -77,8 +77,36 @@ export interface LeadAdv {
   atendimento_humano_ativo: boolean
   atendido_por: string | null
   atendimento_humano_desde: string | null
+  video_enviado?: boolean
+  categoria_video_enviado?: string | null
+  legenda_enviada?: string | null
   ultimaMensagemDoLeadMs?: number
   // Campos Chatwoot: existem no banco mas NUNCA usar no frontend
+}
+
+export interface GatilhoAnuncio {
+  id: string
+  trecho_chave: string
+  categoria: string
+  ativo: boolean
+  created_at: string
+}
+
+export interface VideoCategoria {
+  id: string
+  categoria: string
+  video_url: string
+  duracao_segundos: number | null
+  ativo: boolean
+  created_at: string
+}
+
+export interface LegendaCategoria {
+  id: string
+  categoria: string
+  texto: string
+  ativo: boolean
+  created_at: string
 }
 
 export interface ClienteAdv {

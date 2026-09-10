@@ -211,7 +211,11 @@ CREATE TABLE IF NOT EXISTS leads_adv (
   atendimento_humano_ativo BOOLEAN NOT NULL DEFAULT FALSE,
   atendido_por             TEXT,
   atendimento_humano_desde TIMESTAMPTZ,
-  created_at               TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  video_enviado            BOOLEAN DEFAULT FALSE,
+  categoria_video_enviado  TEXT,
+  legenda_enviada          TEXT,
+  created_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT leads_adv_whatsapp_lead_key UNIQUE (whatsapp_lead)
 );
 
 COMMENT ON TABLE leads_adv IS 'Tabela principal de atendimento e triagem de leads.';

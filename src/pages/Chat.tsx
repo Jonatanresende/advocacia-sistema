@@ -21,6 +21,9 @@ import {
   Trash2,
   FileText,
   X,
+  ExternalLink,
+  Eye,
+  Download,
 } from 'lucide-react'
 import AudioMessage from '../components/chat/AudioMessage'
 
@@ -66,10 +69,10 @@ function ConversaItem({
     <button
       onClick={onClick}
       className={`w-full text-left p-3 rounded-[10px] flex items-center gap-3 transition-all duration-150 relative ${ativo
-          ? 'bg-[var(--primary)]/10 border border-[var(--primary)]/30'
-          : naoLido
-            ? 'bg-emerald-500/10 border border-emerald-500/40 shadow-sm'
-            : 'hover:bg-[var(--bg-base)] border border-transparent'
+        ? 'bg-[var(--primary)]/10 border border-[var(--primary)]/30'
+        : naoLido
+          ? 'bg-emerald-500/10 border border-emerald-500/40 shadow-sm'
+          : 'hover:bg-[var(--bg-base)] border border-transparent'
         }`}
     >
       {/* Avatar com ponto indicador pulsante se não lido */}
@@ -113,7 +116,19 @@ function ConversaItem({
   )
 }
 
-function Balao({ msg }: { msg: import('../hooks/useChat').ChatwootMessage }) {
+type MediaPreview = {
+  url: string
+  tipo: 'image' | 'pdf'
+  nome?: string
+}
+
+function Balao({
+  msg,
+  onPreviewMedia,
+}: {
+  msg: import('../hooks/useChat').ChatwootMessage
+  onPreviewMedia?: (media: MediaPreview) => void
+}) {
   const doLead = msg.message_type === 0
   const nota = msg.private
   const bolhaEscura = !doLead && !nota
@@ -122,20 +137,86 @@ function Balao({ msg }: { msg: import('../hooks/useChat').ChatwootMessage }) {
     <div className={`flex ${doLead ? 'justify-start' : 'justify-end'} mb-3`}>
       <div
         className={`max-w-[78%] rounded-[14px] px-3.5 py-2.5 text-[13.5px] whitespace-pre-wrap break-words ${nota
-            ? 'bg-[var(--warning-bg)] border border-[var(--warning-border)] text-[var(--text-main)]'
-            : doLead
-              ? 'bg-[var(--bg-base)] border border-[var(--border-card)] text-[var(--text-main)]'
-              : 'bg-[var(--primary)] text-white'
+          ? 'bg-[var(--warning-bg)] border border-[var(--warning-border)] text-[var(--text-main)]'
+          : doLead
+            ? 'bg-[var(--bg-base)] border border-[var(--border-card)] text-[var(--text-main)]'
+            : 'bg-[var(--primary)] text-white'
           }`}
       >
         {msg.content ||
           (!msg.attachments?.length && <span className="italic opacity-70">(sem texto)</span>)}
-        {msg.attachments?.map((att) =>
-          att.file_type === 'audio' ? (
-            <div key={att.id} className={msg.content ? 'mt-2' : ''}>
-              <AudioMessage src={att.data_url} outgoing={bolhaEscura} />
-            </div>
-          ) : (
+        {msg.attachments?.map((att) => {
+          const isAudio = att.file_type === 'audio'
+          const isVideo = att.file_type === 'video'
+          const isImage = att.file_type === 'image' || /\.(png|jpe?g|gif|webp|svg)($|\?)/i.test(att.data_url || '')
+          const isPdf = att.file_type === 'pdf' || (att.file_type === 'file' && att.data_url?.toLowerCase().includes('.pdf')) || att.data_url?.toLowerCase().includes('.pdf')
+
+          if (isAudio) {
+            return (
+              <div key={att.id} className={msg.content ? 'mt-2' : ''}>
+                <AudioMessage src={att.data_url} outgoing={bolhaEscura} />
+              </div>
+            )
+          }
+
+          if (isVideo) {
+            return (
+              <div key={att.id} className={msg.content ? 'mt-2' : ''}>
+                <video
+                  src={att.data_url}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="rounded-lg max-w-[260px] max-h-[320px] w-full"
+                />
+              </div>
+            )
+          }
+
+          if (isImage) {
+            const nomeImg = att.data_url?.split('/')?.pop()?.split('?')[0] || 'Imagem'
+            return (
+              <div key={att.id} className={msg.content ? 'mt-2' : ''}>
+                <button
+                  type="button"
+                  onClick={() => onPreviewMedia?.({ url: att.data_url, tipo: 'image', nome: nomeImg })}
+                  className="block overflow-hidden rounded-lg max-w-[260px] text-left cursor-pointer group"
+                >
+                  <img
+                    src={att.thumb_url || att.data_url}
+                    alt="Anexo de imagem"
+                    className="rounded-lg max-h-[300px] w-full object-cover group-hover:opacity-90 transition-opacity"
+                    loading="lazy"
+                  />
+                </button>
+              </div>
+            )
+          }
+
+          if (isPdf) {
+            const nomeArquivo = att.data_url?.split('/')?.pop()?.split('?')[0] || 'Documento.pdf'
+            return (
+              <div key={att.id} className={msg.content ? 'mt-2' : ''}>
+                <div className="rounded-lg border border-white/20 bg-black/10 p-2.5 max-w-[280px]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <FileText size={22} className="text-red-400 shrink-0" />
+                    <span className="text-xs font-medium truncate opacity-90" title={nomeArquivo}>
+                      {nomeArquivo}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onPreviewMedia?.({ url: att.data_url, tipo: 'pdf', nome: nomeArquivo })}
+                    className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-[8px] bg-white/10 hover:bg-white/20 text-xs font-medium transition-colors cursor-pointer"
+                  >
+                    <Eye size={13} /> Visualizar documento
+                  </button>
+                </div>
+              </div>
+            )
+          }
+
+          return (
             <a
               key={att.id}
               href={att.data_url}
@@ -146,7 +227,7 @@ function Balao({ msg }: { msg: import('../hooks/useChat').ChatwootMessage }) {
               <ImageIcon size={12} /> Ver anexo
             </a>
           )
-        )}
+        })}
         <div className="text-[10px] mt-1 opacity-50 text-right">
           {format(new Date(msg.created_at * 1000), 'dd/MM HH:mm')}
         </div>
@@ -164,6 +245,7 @@ export default function Chat() {
   const [arquivoAnexado, setArquivoAnexado] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
+  const [midiaModal, setMidiaModal] = useState<MediaPreview | null>(null)
 
   // Controle de leitura: guarda timestamp de quando a conversa de cada lead foi lida pelo usuário
   const [vistosMap, setVistosMap] = useState<Record<string, number>>(() => {
@@ -220,6 +302,14 @@ export default function Chat() {
     }
   }, [leadSelecionado?.id, mensagens.length, marcarComoLido])
 
+  // Rola o scroll da conversa para a mensagem mais recente
+  const mensagensContainerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (mensagensContainerRef.current) {
+      mensagensContainerRef.current.scrollTop = mensagensContainerRef.current.scrollHeight
+    }
+  }, [mensagens.length, leadSelecionado?.id])
+
   const leadsFiltrados = useMemo(() => {
     if (!busca.trim()) return leads
     const termo = busca.toLowerCase()
@@ -268,14 +358,16 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <PageHeader
-        title="Chat"
-        description="Converse diretamente com os leads. Ao mandar uma mensagem manual, o assistente virtual para de responder esse contato automaticamente."
-      />
+    <div className="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-7.5rem)] min-h-[500px]">
+      <div className="shrink-0 mb-3">
+        <PageHeader
+          title="Chat"
+          description="Converse diretamente com os leads. Ao mandar uma mensagem manual, o assistente virtual para de responder esse contato automaticamente."
+        />
+      </div>
 
       <Card noPadding className="flex-1 min-h-0 overflow-hidden">
-        <div className="h-full flex flex-col md:grid md:grid-cols-[300px_1fr]">
+        <div className="h-full flex flex-col md:grid md:grid-cols-[300px_1fr] min-h-0">
 
           {/* ── Coluna esquerda: lista de conversas ─────────────────── */}
           <div
@@ -383,7 +475,7 @@ export default function Chat() {
                 </div>
 
                 {/* Mensagens */}
-                <div className="flex-1 overflow-y-auto p-4">
+                <div ref={mensagensContainerRef} className="flex-1 overflow-y-auto p-4">
                   {carregandoMensagens && (
                     <p className="text-[12px] text-[var(--text-muted)] text-center py-8">Carregando mensagens...</p>
                   )}
@@ -402,7 +494,7 @@ export default function Chat() {
                     </div>
                   )}
                   {mensagens.map((msg) => (
-                    <Balao key={msg.id} msg={msg} />
+                    <Balao key={msg.id} msg={msg} onPreviewMedia={setMidiaModal} />
                   ))}
                 </div>
 
@@ -535,6 +627,80 @@ export default function Chat() {
           </div>
         </div>
       </Card>
+
+      {/* Modal de Pré-visualização de Imagem / PDF */}
+      {midiaModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setMidiaModal(null)}
+        >
+          <div
+            className="relative w-full max-w-4xl max-h-[90vh] bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[16px] overflow-hidden flex flex-col shadow-2xl animate-scaleUp"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Cabeçalho da Modal */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--border-card)] bg-[var(--bg-base)]">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {midiaModal.tipo === 'image' ? (
+                  <ImageIcon size={18} className="text-[var(--primary)] shrink-0" />
+                ) : (
+                  <FileText size={18} className="text-red-400 shrink-0" />
+                )}
+                <span className="text-sm font-semibold text-[var(--text-main)] truncate" title={midiaModal.nome}>
+                  {midiaModal.nome || (midiaModal.tipo === 'image' ? 'Visualização da Imagem' : 'Visualização do PDF')}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href={midiaModal.url}
+                  download={midiaModal.nome || 'anexo'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[8px] bg-[var(--primary)] text-white hover:opacity-90 transition-opacity"
+                >
+                  <Download size={14} /> Baixar
+                </a>
+
+                <a
+                  href={midiaModal.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-[8px] bg-[var(--bg-base)] border border-[var(--border-card)] text-[var(--text-main)] hover:bg-[var(--border-card)] transition-colors"
+                >
+                  <ExternalLink size={14} /> Abrir em nova aba
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setMidiaModal(null)}
+                  className="p-1.5 rounded-[8px] hover:bg-[var(--bg-base)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors cursor-pointer ml-1"
+                  aria-label="Fechar"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Conteúdo da Modal */}
+            <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-black/40 min-h-[400px]">
+              {midiaModal.tipo === 'image' ? (
+                <img
+                  src={midiaModal.url}
+                  alt="Visualização"
+                  className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-lg"
+                />
+              ) : (
+                <iframe
+                  src={`https://docs.google.com/gview?url=${encodeURIComponent(midiaModal.url)}&embedded=true`}
+                  title="Visualizador PDF"
+                  className="w-full h-[75vh] rounded-lg border border-[var(--border-card)] bg-white"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

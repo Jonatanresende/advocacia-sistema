@@ -150,7 +150,8 @@ export function useChatConversa(lead: LeadAdv | null) {
       // "Tem mais antigas" só é recalculado na carga inicial da conversa —
       // o polling só atualiza a ponta recente e não deve mexer nisso.
       if (!silencioso) setTemMaisAntigas(todasMsgs.length >= 20)
-    } catch {
+    } catch (err) {
+      console.error('Erro ao buscar mensagens:', err)
       if (!silencioso) error('Não foi possível carregar as mensagens dessa conversa.')
     } finally {
       if (!silencioso) setIsLoading(false)
