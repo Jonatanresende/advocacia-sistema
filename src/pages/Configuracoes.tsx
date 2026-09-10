@@ -40,6 +40,8 @@ export default function Configuracoes() {
         nome: '',
         logo_url: null,
         favicon_url: null,
+        ia_pausada_global: false,
+        pausar_horario_comercial_ativo: false,
         updated_at: new Date().toISOString(),
       })
 
