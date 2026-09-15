@@ -13,6 +13,7 @@ import {
   UserCheck,
   KeyRound,
   Trash2,
+  ShieldCheck,
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useUsuarios } from '../hooks/useUsuarios'
@@ -33,6 +34,22 @@ const ROLE_OPTIONS: { value: Role; label: string; icon: React.ElementType; desc:
     label: 'Funcionário',
     icon: UserCheck,
     desc: 'Acesso configurável pelo administrador',
+  },
+]
+
+// Perfis de acesso disponíveis para advogados
+const ADVOGADO_PERFIL_OPTIONS = [
+  {
+    value: 'advogado' as const,
+    label: 'Advogado',
+    icon: Briefcase,
+    desc: 'Acessa seus próprios leads e agendamentos',
+  },
+  {
+    value: 'admin' as const,
+    label: 'Admin',
+    icon: ShieldCheck,
+    desc: 'Acesso total ao sistema, igual ao administrador principal',
   },
 ]
 
@@ -64,6 +81,8 @@ export default function UsuarioDetalhe() {
   const [email, setEmail] = useState('')
   const [telefone, setTelefone] = useState('')
   const [role, setRole] = useState<Role>('advogado')
+  // Perfil de acesso do advogado: 'advogado' ou 'admin'
+  const [advogadoPerfil, setAdvogadoPerfil] = useState<'advogado' | 'admin'>('advogado')
   const [advogadoId, setAdvogadoId] = useState('')
   const [senha, setSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
@@ -92,7 +111,14 @@ export default function UsuarioDetalhe() {
       setNome(usuario.nome)
       setEmail(usuario.email)
       setTelefone(usuario.telefone || '')
-      setRole(usuario.role as Role)
+      // Se o usuário for admin mas tiver advogado_id vinculado, tratamos como advogado com perfil admin
+      if (usuario.role === 'admin' && usuario.advogado_id) {
+        setRole('advogado')
+        setAdvogadoPerfil('admin')
+      } else {
+        setRole(usuario.role as Role)
+        setAdvogadoPerfil('advogado')
+      }
       setAdvogadoId(usuario.advogado_id || '')
       setAtivo(usuario.ativo)
     }
@@ -115,13 +141,15 @@ export default function UsuarioDetalhe() {
     }
 
     setIsSaving(true)
+    // Role efetivo: se o papel é advogado mas com perfil admin, enviamos 'admin'
+    const roleEfetivo = role === 'advogado' && advogadoPerfil === 'admin' ? 'admin' : role
     try {
       if (isNew) {
         const { error: err } = await criarUsuario({
           nome,
           email,
           senha,
-          role,
+          role: roleEfetivo,
           telefone: telefone || undefined,
           advogado_id: (!criarCadastroAdvogado && advogadoId) ? advogadoId : undefined,
           criar_cadastro_advogado: role === 'advogado' ? criarCadastroAdvogado : undefined,
@@ -131,10 +159,10 @@ export default function UsuarioDetalhe() {
       } else if (id) {
         const { error: err } = await atualizarUsuario(id, {
           nome,
-          role,
+          role: roleEfetivo,
           ativo,
           telefone: telefone || null,
-          advogado_id: advogadoId || null,
+          advogado_id: role === 'advogado' ? (advogadoId || null) : null,
           ...(senha ? { senha } : {}),
         })
         if (!err) navigate('/usuarios')
@@ -261,7 +289,10 @@ export default function UsuarioDetalhe() {
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setRole(opt.value)}
+                    onClick={() => {
+                      setRole(opt.value)
+                      if (opt.value !== 'advogado') setAdvogadoPerfil('advogado')
+                    }}
                     className={`flex flex-col items-start gap-2 p-4 rounded-[12px] border-2 text-left transition-all ${
                       isSelected
                         ? 'border-[var(--primary)] bg-[var(--primary)]/10'
@@ -282,9 +313,66 @@ export default function UsuarioDetalhe() {
               })}
             </div>
 
-            {/* Vincular/Criar advogado */}
+            {/* Perfil de acesso do advogado (admin ou advogado) */}
             {role === 'advogado' && (
               <div className="mt-5 border-t border-[var(--border-card)] pt-5 flex flex-col gap-4">
+
+                {/* Sub-seleção: perfil de acesso */}
+                <div>
+                  <label className="block text-[12px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-3">
+                    Nível de Acesso
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {ADVOGADO_PERFIL_OPTIONS.map((opt) => {
+                      const Icon = opt.icon
+                      const isSelected = advogadoPerfil === opt.value
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setAdvogadoPerfil(opt.value)}
+                          className={`flex flex-col items-start gap-2 p-3.5 rounded-[10px] border-2 text-left transition-all ${
+                            isSelected
+                              ? opt.value === 'admin'
+                                ? 'border-purple-500 bg-purple-500/10'
+                                : 'border-[var(--primary)] bg-[var(--primary)]/10'
+                              : 'border-[var(--border-card)] hover:border-[var(--primary)]/30'
+                          }`}
+                        >
+                          <div className={`p-1.5 rounded-lg ${
+                            isSelected
+                              ? opt.value === 'admin' ? 'bg-purple-500/20' : 'bg-[var(--primary)]/20'
+                              : 'bg-white/5'
+                          }`}>
+                            <Icon size={14} className={isSelected
+                              ? opt.value === 'admin' ? 'text-purple-400' : 'text-[var(--primary)]'
+                              : 'text-[var(--text-muted)]'} />
+                          </div>
+                          <div>
+                            <p className={`text-[12px] font-semibold ${
+                              isSelected
+                                ? opt.value === 'admin' ? 'text-purple-300' : 'text-[var(--text-main)]'
+                                : 'text-[var(--text-muted)]'
+                            }`}>
+                              {opt.label}
+                            </p>
+                            <p className="text-[10px] text-[var(--text-muted)] mt-0.5 leading-snug">{opt.desc}</p>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {advogadoPerfil === 'admin' && (
+                    <div className="mt-3 flex items-start gap-2 p-3 bg-purple-500/8 border border-purple-500/20 rounded-[8px]">
+                      <ShieldCheck size={14} className="text-purple-400 mt-0.5 shrink-0" />
+                      <p className="text-[11px] text-purple-300 leading-relaxed">
+                        Este advogado terá acesso total ao sistema, incluindo gerenciamento de usuários e configurações.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Vínculo com agenda */}
                 {isNew ? (
                   <>
                     <div className="flex flex-col gap-2">
@@ -415,6 +503,8 @@ export default function UsuarioDetalhe() {
                     placeholder="Mínimo 8 caracteres"
                     required={isNew}
                     minLength={8}
+                    autoComplete="new-password"
+                    name="nova-senha-usuario"
                     className="w-full px-3 pr-10 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-all"
                   />
                   <button
@@ -437,6 +527,8 @@ export default function UsuarioDetalhe() {
                     onChange={(e) => setConfirmarSenha(e.target.value)}
                     placeholder="Repita a senha"
                     required={isNew || !!senha}
+                    autoComplete="new-password"
+                    name="confirmar-senha-usuario"
                     className="w-full px-3 pr-10 py-2.5 bg-[var(--bg-base)] border border-[var(--border-card)] rounded-[10px] text-[var(--text-main)] text-[14px] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] transition-all"
                   />
                   <button

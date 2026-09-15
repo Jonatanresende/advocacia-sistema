@@ -88,14 +88,20 @@ export default function Usuarios() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const filtered = usuarios.filter((u) => {
-    if (u.role === 'admin') return false
-    if (u.role !== tab) return false
+    // Se for admin puro do sistema (sem vínculo com advogado), não exibe na lista comum
+    if (u.role === 'admin' && !u.advogado_id) return false
+    
+    // Determina a qual aba este usuário pertence
+    const categoria = (u.role === 'advogado' || (u.role === 'admin' && !!u.advogado_id)) ? 'advogado' : 'funcionario'
+    
+    if (categoria !== tab) return false
+    
     if (!search) return true
     const q = search.toLowerCase()
     return u.nome.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
   })
 
-  const advogadoCount = usuarios.filter((u) => u.role === 'advogado').length
+  const advogadoCount = usuarios.filter((u) => u.role === 'advogado' || (u.role === 'admin' && !!u.advogado_id)).length
   const funcionarioCount = usuarios.filter((u) => u.role === 'funcionario').length
 
   const handleToggle = async (id: string, ativo: boolean) => {

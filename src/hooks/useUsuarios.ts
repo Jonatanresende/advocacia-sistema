@@ -38,12 +38,18 @@ export function useUsuarios() {
     try {
       const headers = await getHeaders()
       const res = await fetch(FUNCTION_URL, { method: 'GET', headers })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error)
+      const text = await res.text()
+      let data
+      try {
+        data = JSON.parse(text)
+      } catch (e) {
+        data = { error: text }
+      }
+      if (!res.ok) throw new Error(`[${res.status}] ` + (data.error || 'Erro desconhecido'))
       setUsuarios(data as UsuarioCompleto[])
     } catch (err) {
-      console.error(err)
-      error('Erro ao carregar usuários')
+      console.error("ERRO NO FETCH USUARIOS:", err)
+      error(err instanceof Error ? err.message : 'Erro ao carregar usuários')
     } finally {
       setIsLoading(false)
     }
@@ -57,7 +63,7 @@ export function useUsuarios() {
     nome: string
     email: string
     senha: string
-    role: 'advogado' | 'funcionario'
+    role: 'advogado' | 'funcionario' | 'admin'
     telefone?: string
     advogado_id?: string
     criar_cadastro_advogado?: boolean
