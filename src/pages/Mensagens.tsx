@@ -249,10 +249,12 @@ export default function Mensagens() {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <PageHeader title="Mensagens" description="Converse diretamente com outros usuários do sistema." />
+    <div className="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-7.5rem)] min-h-[500px]">
+      <div className="shrink-0 mb-3">
+        <PageHeader title="Mensagens" description="Converse diretamente com outros usuários do sistema." />
+      </div>
 
-      <div className="flex flex-1 min-h-0 gap-4">
+      <div className="flex flex-1 min-h-0 gap-4 overflow-hidden">
         {/* ── Coluna esquerda: lista de conversas ── */}
         <Card
           noPadding
