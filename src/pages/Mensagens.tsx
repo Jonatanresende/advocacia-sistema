@@ -227,7 +227,7 @@ export default function Mensagens() {
 
   const handleEnviar = useCallback(async () => {
     if (!podeEnviar) return
-    const ok = await enviarMensagem(texto, anexoPendente)
+    await enviarMensagem(texto, anexoPendente)
     // enviarMensagem retorna undefined (void), então só limpa se não lançou
     setTexto('')
     setArquivoAnexado(null)

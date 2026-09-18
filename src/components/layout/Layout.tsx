@@ -4,10 +4,14 @@ import Sidebar from './Sidebar'
 import Header from './Header'
 import { X } from 'lucide-react'
 import { useNotificacaoLeads } from '../../hooks/useNotificacaoLeads'
+import { useNotificacaoMensagens } from '../../hooks/useNotificacaoMensagens'
 
 export default function Layout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { temNaoLido } = useNotificacaoLeads()
+
+  // Notificação sonora de mensagens internas — ativo em qualquer página
+  useNotificacaoMensagens()
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[var(--bg-base)]">
