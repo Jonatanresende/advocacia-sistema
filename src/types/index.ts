@@ -218,3 +218,17 @@ export interface PermissaoRole {
   label: string
   ativo: boolean
 }
+
+export interface MensagemInterna {
+  id: string
+  remetente_id: string
+  destinatario_id: string
+  conteudo: string | null
+  lida: boolean
+  created_at: string
+  // Anexos (áudio, imagem, PDF)
+  anexo_url: string | null
+  anexo_tipo: string | null // 'audio' | 'image' | 'pdf' | 'file'
+  // Join opcional
+  remetente?: Perfil
+}

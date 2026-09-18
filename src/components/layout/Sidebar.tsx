@@ -14,10 +14,12 @@ import {
   LogOut,
   UserCog,
   User,
+  MessageCircle,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useAuth } from '../../contexts/AuthContext'
+import { useMensagensConversas } from '../../hooks/useMensagens'
 
 /* ── Grupos de navegação ─────────────────────────────────────────── */
 const navGroups = [
@@ -30,9 +32,10 @@ const navGroups = [
   {
     label: 'Atendimento',
     items: [
-      { to: '/kanban',  icon: Kanban,         label: 'Kanban' },
-      { to: '/chat',    icon: MessageSquare,   label: 'Chat' },
-      { to: '/leads',   icon: Users,           label: 'Leads' },
+      { to: '/kanban',     icon: Kanban,         label: 'Kanban' },
+      { to: '/chat',       icon: MessageSquare,  label: 'Chat' },
+      { to: '/leads',      icon: Users,          label: 'Leads' },
+      { to: '/mensagens',  icon: MessageCircle,  label: 'Mensagens' },
     ],
   },
   {
@@ -61,12 +64,14 @@ function NavItem({
   icon: Icon,
   label,
   temNaoLido,
+  badgeCount,
   onNavigate,
 }: {
   to: string
   icon: React.ElementType
   label: string
   temNaoLido?: boolean
+  badgeCount?: number
   onNavigate?: () => void
 }) {
   const exibeAnimacaoNaoLido = to === '/chat' && temNaoLido
@@ -108,6 +113,13 @@ function NavItem({
 
           <span className="flex-1 truncate">{label}</span>
 
+          {/* Tag de contagem (badge) */}
+          {badgeCount !== undefined && badgeCount > 0 && (
+            <div className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-[var(--primary)] px-1.5 text-[10px] font-bold text-white">
+              {badgeCount}
+            </div>
+          )}
+
           {/* Tag / ponto pulsante no lado direito caso haja mensagem não lida */}
           {exibeAnimacaoNaoLido && (
             <span className="relative flex h-2 w-2 shrink-0">
@@ -125,6 +137,7 @@ export default function Sidebar({ className, temNaoLido, onNavigate }: SidebarPr
   const { theme, toggleTheme } = useTheme()
   const { perfil, isAdmin, permissoes, signOut } = useAuth()
   const navigate = useNavigate()
+  const { totalNaoLidas } = useMensagensConversas()
 
   const handleSignOut = async () => {
     await signOut()
@@ -177,6 +190,7 @@ export default function Sidebar({ className, temNaoLido, onNavigate }: SidebarPr
                   icon={item.icon}
                   label={item.label}
                   temNaoLido={temNaoLido}
+                  badgeCount={item.to === '/mensagens' ? totalNaoLidas : undefined}
                   onNavigate={onNavigate}
                 />
               ))}

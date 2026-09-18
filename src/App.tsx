@@ -18,6 +18,7 @@ import Configuracoes from './pages/Configuracoes'
 import Usuarios from './pages/Usuarios'
 import UsuarioDetalhe from './pages/UsuarioDetalhe'
 import MeuPerfil from './pages/MeuPerfil'
+import Mensagens from './pages/Mensagens'
 
 export default function App() {
   return (
@@ -28,7 +29,7 @@ export default function App() {
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              
+
               <Route element={<ProtectedRoute />}>
                 <Route element={<Layout />}>
                   <Route element={<RestrictedRoute rota="/dashboard" />}>
@@ -57,7 +58,8 @@ export default function App() {
 
                   {/* Sempre acessível a qualquer usuário logado, independente do papel */}
                   <Route path="/meu-perfil" element={<MeuPerfil />} />
-                  
+                  <Route path="/mensagens" element={<Mensagens />} />
+
                   {/* Admin Only Routes */}
                   <Route element={<AdminRoute />}>
                     <Route path="/configuracoes" element={<Configuracoes />} />
@@ -67,7 +69,7 @@ export default function App() {
                   </Route>
                 </Route>
               </Route>
-              
+
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </AuthProvider>
