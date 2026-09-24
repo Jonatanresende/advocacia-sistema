@@ -42,34 +42,7 @@ export function useChatLeads() {
       if (err) throw err
 
       const leadsBase = (data as LeadAdv[]) ?? []
-
-      // Para cada lead, descobre o timestamp da última mensagem ENVIADA PELO LEAD (message_type 0).
-      // Isso é imune a respostas automáticas da IA!
-      const leadsComTimeLead = await Promise.all(
-        leadsBase.map(async (lead) => {
-          try {
-            const { data: cData } = await supabase.functions.invoke('chatwoot-proxy', {
-              body: { action: 'buscar_mensagens', lead_id: lead.id },
-            })
-            if (Array.isArray(cData?.payload)) {
-              const msgs = cData.payload as ChatwootMessage[]
-              const msgsLead = msgs.filter((m) => m.message_type === 0 && !m.private)
-              if (msgsLead.length > 0) {
-                const ultMsgLead = msgsLead[msgsLead.length - 1]
-                return { ...lead, ultimaMensagemDoLeadMs: ultMsgLead.created_at * 1000 }
-              }
-            }
-          } catch {
-            // Em caso de falha temporária, usa fallback com a ultima_mensagem do banco
-          }
-          return {
-            ...lead,
-            ultimaMensagemDoLeadMs: lead.ultima_mensagem ? new Date(lead.ultima_mensagem).getTime() : 0,
-          }
-        })
-      )
-
-      setLeads(leadsComTimeLead)
+      setLeads(leadsBase)
     } catch {
       error('Não foi possível carregar a lista de conversas.')
     } finally {

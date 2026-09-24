@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../contexts/ToastContext'
-import type { ChatwootMessage } from './useChat'
 
 type LeadSnapshot = {
   id: string
@@ -98,23 +97,15 @@ export function useNotificacaoLeads() {
   // Lista de leads guardada em ref para avaliação de mensagens não lidas
   const leadsListaRef = useRef<LeadSnapshot[]>([])
 
-  // Mapa: leadId → timestamp ms da última atualização do lead
-  const baselineRef = useRef<Map<string, number>>(new Map())
-  // Mapa: leadId → ID da última mensagem do lead (type 0) processada
-  const ultimoMsgIdLeadRef = useRef<Map<string, number>>(new Map())
-  // Mapa: leadId → timestamp ms da última mensagem vinda do lead no Chatwoot
-  const ultimaMensagemDoLeadMsRef = useRef<Map<string, number>>(new Map())
+  // Mapa: leadId → timestamp ms da última mensagem conhecida do lead
+  const ultimoMsgTimeRef = useRef<Map<string, number>>(new Map())
   const prontoRef = useRef(false)
 
   // Avalia se existe algum lead com mensagem mais recente que a data de leitura
-  // Usa o campo visto_em do próprio lead (servidor), sem depender de localStorage
   const atualizarStatusNaoLido = useCallback(() => {
     let possuiNaoLido = false
     for (const lead of leadsListaRef.current) {
-      const timeMsgChatwoot = ultimaMensagemDoLeadMsRef.current.get(lead.id) ?? 0
-      const timeMsgDb = extrairTimeMs(lead.ultima_mensagem)
-      const timeMsg = Math.max(timeMsgChatwoot, timeMsgDb)
-
+      const timeMsg = extrairTimeMs(lead.ultima_mensagem)
       const timeVisto = extrairTimeMs(lead.visto_em)
       if (timeMsg > 0 && timeMsg > timeVisto) {
         possuiNaoLido = true
@@ -149,52 +140,7 @@ export function useNotificacaoLeads() {
     dispararNotificacaoBrowser(nomeLead, whatsapp, texto)
   }, [success])
 
-  // Busca e verifica mensagens da conversa para um lead
-  const verificarMensagensLead = useCallback(async (lead: LeadSnapshot, emitirAlerta: boolean) => {
-    try {
-      const { data, error: err } = await supabase.functions.invoke('chatwoot-proxy', {
-        body: { action: 'buscar_mensagens', lead_id: lead.id },
-      })
-
-      if (err || data?.error || !Array.isArray(data?.payload)) return
-
-      const msgs = data.payload as ChatwootMessage[]
-      if (msgs.length === 0) return
-
-      // Filtra APENAS mensagens enviadas pelo lead (message_type === 0)
-      const msgsDoLead = msgs.filter((m) => m.message_type === 0 && !m.private)
-      if (msgsDoLead.length === 0) return
-
-      // Pega a mensagem mais recente enviada pelo lead
-      const ultimaMsgLead = msgsDoLead[msgsDoLead.length - 1]
-      const timestampMsLead = ultimaMsgLead.created_at ? ultimaMsgLead.created_at * 1000 : Date.now()
-      ultimaMensagemDoLeadMsRef.current.set(lead.id, timestampMsLead)
-      atualizarStatusNaoLido()
-
-      const lastId = ultimoMsgIdLeadRef.current.get(lead.id)
-
-      // Se é a primeira vez verificando este lead, registra o ID sem alertar (baseline)
-      if (lastId === undefined) {
-        ultimoMsgIdLeadRef.current.set(lead.id, ultimaMsgLead.id)
-        return
-      }
-
-      // Se chegou um novo ID de mensagem vindo do lead
-      if (ultimaMsgLead.id > lastId) {
-        ultimoMsgIdLeadRef.current.set(lead.id, ultimaMsgLead.id)
-
-        if (emitirAlerta) {
-          notificarUsuario(lead.nome_lead, lead.whatsapp_lead, ultimaMsgLead.content)
-        }
-      }
-    } catch {
-      // Ignora erro temporário
-    }
-  }, [notificarUsuario, atualizarStatusNaoLido])
-
   const processarSnapshot = useCallback((lead: LeadSnapshot) => {
-    if (!prontoRef.current) return
-
     // Atualiza a lista guardada na ref
     const idx = leadsListaRef.current.findIndex((l) => l.id === lead.id)
     if (idx >= 0) {
@@ -204,11 +150,21 @@ export function useNotificacaoLeads() {
     }
     atualizarStatusNaoLido()
 
-    // Verifica se chegou mensagem nova do lead no Chatwoot
-    verificarMensagensLead(lead, true)
-  }, [verificarMensagensLead, atualizarStatusNaoLido])
+    if (!prontoRef.current) return
 
-  // ─── 1. Carga inicial de baseline ────────────────────────────────────────
+    const timeMsg = extrairTimeMs(lead.ultima_mensagem)
+    const timeAnterior = ultimoMsgTimeRef.current.get(lead.id)
+
+    if (timeAnterior !== undefined && timeMsg > timeAnterior) {
+      const timeVisto = extrairTimeMs(lead.visto_em)
+      if (timeMsg > timeVisto) {
+        notificarUsuario(lead.nome_lead, lead.whatsapp_lead, lead.ultima_mensagem)
+      }
+    }
+    ultimoMsgTimeRef.current.set(lead.id, timeMsg)
+  }, [notificarUsuario, atualizarStatusNaoLido])
+
+  // ─── 1. Carga inicial de baseline (Direct Supabase DB Query) ─────────────
   useEffect(() => {
     let cancelado = false
 
@@ -225,9 +181,7 @@ export function useNotificacaoLeads() {
 
           for (const row of leads) {
             const time = extrairTimeMs(row.ultima_mensagem)
-            baselineRef.current.set(row.id, time)
-            // Popula baseline de mensagens do lead sem tocar alerta
-            verificarMensagensLead(row, false)
+            ultimoMsgTimeRef.current.set(row.id, time)
           }
 
           atualizarStatusNaoLido()
@@ -243,7 +197,7 @@ export function useNotificacaoLeads() {
     return () => {
       cancelado = true
     }
-  }, [verificarMensagensLead, atualizarStatusNaoLido])
+  }, [atualizarStatusNaoLido])
 
   // ─── 2. Realtime (Supabase WebSocket instantâneo) ──────────────────────
   useEffect(() => {
@@ -253,7 +207,6 @@ export function useNotificacaoLeads() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'leads_adv' },
         (payload) => {
-          if (!prontoRef.current) return
           const novo = payload.new as LeadSnapshot
           if (novo && novo.id_conversa_chatwoot) {
             processarSnapshot(novo)
@@ -267,7 +220,7 @@ export function useNotificacaoLeads() {
     }
   }, [processarSnapshot])
 
-  // ─── 3. Polling rápido de 2.5 segundos para detectar mensagem antes da IA ─────────────
+  // ─── 3. Polling de segurança a cada 10 segundos (Direto no Banco, 1 única query) ─
   useEffect(() => {
     const poll = async () => {
       if (!prontoRef.current) return
@@ -279,21 +232,18 @@ export function useNotificacaoLeads() {
 
         if (data) {
           const leads = data as LeadSnapshot[]
-          leadsListaRef.current = leads
           for (const lead of leads) {
-            // Checa diretamente se o lead enviou nova mensagem no Chatwoot
-            verificarMensagensLead(lead, true)
+            processarSnapshot(lead)
           }
-          atualizarStatusNaoLido()
         }
       } catch {
         // Polling silencioso
       }
     }
 
-    const interval = setInterval(poll, 2500)
+    const interval = setInterval(poll, 10000)
     return () => clearInterval(interval)
-  }, [verificarMensagensLead, atualizarStatusNaoLido])
+  }, [processarSnapshot])
 
   // ─── Permissão do Navegador ─────────────────────────────────────────────
   const solicitarPermissao = useCallback(async () => {
@@ -309,4 +259,5 @@ export function useNotificacaoLeads() {
 
   return { permissaoNotificacao, solicitarPermissao, testarNotificacao, temNaoLido, marcarComoLido }
 }
+
 
