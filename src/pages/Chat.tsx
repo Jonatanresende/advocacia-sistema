@@ -25,8 +25,10 @@ import {
   ExternalLink,
   Eye,
   Download,
+  Smile,
 } from 'lucide-react'
 import AudioMessage from '../components/chat/AudioMessage'
+import EmojiPickerPopover from '../components/chat/EmojiPickerPopover'
 
 function formatarTempoGravacao(segundos: number) {
   const min = Math.floor(segundos / 60)
@@ -260,9 +262,27 @@ export default function Chat() {
   const [busca, setBusca] = useState('')
   const [texto, setTexto] = useState('')
   const [arquivoAnexado, setArquivoAnexado] = useState<File | null>(null)
+  const [mostrarEmojiPicker, setMostrarEmojiPicker] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
   const [midiaModal, setMidiaModal] = useState<MediaPreview | null>(null)
+
+  const handleSelectEmoji = useCallback((emoji: string) => {
+    const textarea = textareaRef.current
+    if (textarea) {
+      const start = textarea.selectionStart ?? texto.length
+      const end = textarea.selectionEnd ?? texto.length
+      const novoTexto = texto.substring(0, start) + emoji + texto.substring(end)
+      setTexto(novoTexto)
+      setTimeout(() => {
+        textarea.focus()
+        textarea.setSelectionRange(start + emoji.length, start + emoji.length)
+      }, 0)
+    } else {
+      setTexto((prev) => prev + emoji)
+    }
+  }, [texto])
 
   const {
     gravando,
@@ -536,9 +556,16 @@ export default function Chat() {
 
                 {/* Input de envio */}
                 <div
-                  className={`p-3 flex items-end gap-2 ${arquivoAnexado || audioGravado ? '' : 'border-t border-[var(--border-card)]'
-                    }`}
+                  className={`p-3 flex items-end gap-2 relative ${
+                    arquivoAnexado || audioGravado ? '' : 'border-t border-[var(--border-card)]'
+                  }`}
                 >
+                  <EmojiPickerPopover
+                    isOpen={mostrarEmojiPicker}
+                    onClose={() => setMostrarEmojiPicker(false)}
+                    onEmojiSelect={handleSelectEmoji}
+                  />
+
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -573,7 +600,23 @@ export default function Chat() {
                       >
                         <Paperclip size={17} />
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setMostrarEmojiPicker((prev) => !prev)}
+                        disabled={!!audioGravado}
+                        className={`shrink-0 w-10 h-10 rounded-[10px] flex items-center justify-center transition-colors disabled:opacity-40 disabled:pointer-events-none ${
+                          mostrarEmojiPicker
+                            ? 'bg-[var(--primary)]/15 text-[var(--primary)]'
+                            : 'text-[var(--text-muted)] hover:bg-[var(--bg-base)] hover:text-[var(--text-main)]'
+                        }`}
+                        aria-label="Inserir emoji"
+                      >
+                        <Smile size={17} />
+                      </button>
+
                       <textarea
+                        ref={textareaRef}
                         value={texto}
                         onChange={(e) => setTexto(e.target.value)}
                         onKeyDown={(e) => {

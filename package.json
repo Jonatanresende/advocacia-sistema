@@ -17,6 +17,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "dotenv": "^17.4.2",
+    "emoji-picker-react": "^4.22.2",
     "lucide-react": "^1.25.0",
     "opus-recorder": "^8.0.5",
     "react": "^19.2.7",
