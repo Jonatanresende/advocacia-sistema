@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import {
   DndContext,
-  closestCenter,
+  rectIntersection,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
   DragOverlay,
   defaultDropAnimationSideEffects,
+  useDroppable,
 } from '@dnd-kit/core'
 import type {
   DragEndEvent,
@@ -128,12 +129,17 @@ function Column({
   leads: LeadAdv[]
   color: string
 }) {
-  const { setNodeRef } = useSortable({ id: `col-${id}`, data: { type: 'Column', id } })
+  // useDroppable torna a coluna inteira um alvo válido de drop,
+  // inclusive quando está vazia (sem cards para detectar via closestCenter).
+  const { setNodeRef, isOver } = useDroppable({ id: `col-${id}`, data: { type: 'Column', status: id } })
 
   return (
     <div
-      className="bg-[var(--bg-base)] rounded-[12px] border border-[var(--border-card)] flex flex-col w-[280px] shrink-0 max-h-full"
-      style={{ boxShadow: 'var(--shadow-card)' }}
+      className="bg-[var(--bg-base)] rounded-[12px] border flex flex-col w-[280px] shrink-0 max-h-full transition-colors duration-150"
+      style={{
+        boxShadow: 'var(--shadow-card)',
+        borderColor: isOver ? color : 'var(--border-card)',
+      }}
     >
       {/* Cabeçalho da coluna */}
       <div className="px-3 pt-3 pb-2.5 border-b border-[var(--border-card)]">
@@ -157,14 +163,24 @@ function Column({
       </div>
 
       {/* Cards */}
-      <div className="flex-1 p-2 overflow-y-auto" ref={setNodeRef}>
+      <div
+        className="flex-1 p-2 overflow-y-auto rounded-b-[12px] transition-colors duration-150"
+        ref={setNodeRef}
+        style={{ backgroundColor: isOver ? `${color}0d` : undefined }}
+      >
         <SortableContext items={leads.map(l => l.id)} strategy={verticalListSortingStrategy}>
           {leads.map(lead => (
             <SortableItem key={lead.id} lead={lead} />
           ))}
         </SortableContext>
         {leads.length === 0 && (
-          <div className="min-h-[80px] flex items-center justify-center p-4 border-2 border-dashed border-[var(--border-card)] rounded-[10px] text-[var(--text-muted)] text-[11px] text-center mt-1">
+          <div
+            className="min-h-[80px] flex items-center justify-center p-4 border-2 border-dashed rounded-[10px] text-[11px] text-center mt-1 transition-colors duration-150"
+            style={{
+              borderColor: isOver ? color : 'var(--border-card)',
+              color: isOver ? color : 'var(--text-muted)',
+            }}
+          >
             Solte aqui
           </div>
         )}
@@ -207,9 +223,13 @@ export default function Kanban() {
     const found = localLeads.find(l => l.id === active.id)
     if (!found) return
 
+    // Resolve o status de destino:
+    // 1. Se o `over` é uma coluna (useDroppable com data.type === 'Column'), usa data.status
+    // 2. Se o `over` é um card (useSortable), usa o status do lead correspondente
     let overStatus: LeadStatus | null = null
-    if (String(over.id).startsWith('col-')) {
-      overStatus = String(over.id).replace('col-', '') as LeadStatus
+    const overData = over.data?.current
+    if (overData?.type === 'Column') {
+      overStatus = overData.status as LeadStatus
     } else {
       const overLead = localLeads.find(l => l.id === over.id)
       if (overLead) overStatus = overLead.status
@@ -272,7 +292,7 @@ export default function Kanban() {
             <div className="flex gap-3 h-full px-2 min-w-max">
               <DndContext
                 sensors={sensors}
-                collisionDetection={closestCenter}
+                collisionDetection={rectIntersection}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
               >
