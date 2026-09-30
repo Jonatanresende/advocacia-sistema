@@ -6,7 +6,7 @@ import Button from '../components/ui/Button'
 import { supabase } from '../lib/supabase'
 import type { OfficeConfig, OfficeHours, DiaSemana, PermissaoRole } from '../types'
 import { useToast } from '../contexts/ToastContext'
-import { Building2, Clock, Shield, Bot } from 'lucide-react'
+import { Building2, Clock, Shield, Bot, Calendar, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react'
 import clsx from 'clsx'
 
 const DIAS_ORDEM: DiaSemana[] = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
@@ -19,8 +19,31 @@ export default function Configuracoes() {
   const [permissions, setPermissions] = useState<PermissaoRole[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSavingConfig, setIsSavingConfig] = useState(false)
+  const [isSavingGoogle, setIsSavingGoogle] = useState(false)
   const [isSavingHours, setIsSavingHours] = useState(false)
   const [isSavingPermissions, setIsSavingPermissions] = useState(false)
+  const [isLoadingCalendars, setIsLoadingCalendars] = useState(false)
+  const [googleCalendars, setGoogleCalendars] = useState<Array<{ id: string; summary: string; primary: boolean }>>([])
+
+  const fetchGoogleCalendars = async () => {
+    setIsLoadingCalendars(true)
+    try {
+      const { data: resData, error: err } = await supabase.functions.invoke('criar-agendamento', {
+        body: { action: 'listar_calendarios_google' },
+      })
+      if (!err && resData?.calendars && resData.calendars.length > 0) {
+        setGoogleCalendars(resData.calendars)
+        success(`${resData.calendars.length} agenda(s) encontrada(s) na sua conta Google!`)
+      } else if (resData?.error) {
+        error(resData.error)
+      }
+    } catch (err) {
+      console.error(err)
+      error('Erro ao buscar agendas do Google')
+    } finally {
+      setIsLoadingCalendars(false)
+    }
+  }
 
   const fetchData = async () => {
     setIsLoading(true)
@@ -42,6 +65,10 @@ export default function Configuracoes() {
         favicon_url: null,
         ia_pausada_global: false,
         pausar_horario_comercial_ativo: false,
+        google_client_id: '',
+        google_client_secret: '',
+        google_calendar_id: 'primary',
+        google_calendar_enabled: false,
         updated_at: new Date().toISOString(),
       })
 
@@ -58,7 +85,102 @@ export default function Configuracoes() {
     }
   }
 
-  useEffect(() => { fetchData() }, [])
+  useEffect(() => {
+    fetchData()
+
+    // Verifica parâmetros de retorno do OAuth do Google
+    const params = new URLSearchParams(window.location.search)
+    const googleStatus = params.get('google')
+    const msg = params.get('msg')
+
+    if (googleStatus === 'conectado') {
+      success('Google Calendar conectado com sucesso!')
+      window.history.replaceState({}, document.title, window.location.pathname)
+    } else if (googleStatus === 'erro') {
+      error(`Erro ao conectar ao Google Calendar: ${msg || 'Autorização falhou'}`)
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (config?.google_refresh_token) {
+      fetchGoogleCalendars()
+    }
+  }, [config?.google_refresh_token])
+
+  const handleConnectGoogle = async () => {
+    if (!config?.google_client_id) {
+      error('Preencha o Client ID antes de conectar.')
+      return
+    }
+
+    // Primeiro salva as credenciais no banco
+    await saveGoogleConfig(false)
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ljmmtacgbmpbbolobrnx.supabase.co'
+    const redirectUri = `${supabaseUrl}/functions/v1/google-calendar-callback`
+    const scope = 'https://www.googleapis.com/auth/calendar'
+    const currentOrigin = window.location.origin
+
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${encodeURIComponent(config.google_client_id)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&access_type=offline` +
+      `&prompt=${encodeURIComponent('consent select_account')}` +
+      `&state=${encodeURIComponent(currentOrigin)}`
+
+    window.location.href = authUrl
+  }
+
+  const handleDisconnectGoogle = async () => {
+    if (!config) return
+    try {
+      const { error: err } = await supabase
+        .from('office_config')
+        .update({
+          google_refresh_token: null,
+          google_calendar_enabled: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', 1)
+
+      if (err) throw err
+
+      setConfig(prev => prev ? { ...prev, google_refresh_token: null, google_calendar_enabled: false } : null)
+      setGoogleCalendars([])
+      success('Google Calendar desconectado')
+    } catch (err) {
+      console.error(err)
+      error('Erro ao desconectar Google Calendar')
+    }
+  }
+
+  const saveGoogleConfig = async (showNotification = true) => {
+    if (!config) return
+    setIsSavingGoogle(true)
+    try {
+      const { error: err } = await supabase
+        .from('office_config')
+        .update({
+          google_client_id: config.google_client_id || null,
+          google_client_secret: config.google_client_secret || null,
+          google_calendar_id: config.google_calendar_id || 'primary',
+          google_calendar_enabled: config.google_calendar_enabled ?? false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', 1)
+
+      if (err) throw err
+      if (showNotification) success('Configurações do Google Calendar salvas')
+    } catch (err) {
+      console.error(err)
+      if (showNotification) error('Erro ao salvar configurações do Google Calendar')
+    } finally {
+      setIsSavingGoogle(false)
+    }
+  }
 
   const handleHourChange = (dia: DiaSemana, field: keyof OfficeHours, value: string | boolean) => {
     setHours(prev => ({
@@ -242,6 +364,112 @@ export default function Configuracoes() {
 
               <div className="pt-2">
                 <Button onClick={saveConfig} isLoading={isSavingConfig}>Salvar Configurações</Button>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {/* Seção - Google Calendar (OAuth2) */}
+        <Card className="flex flex-col gap-6 shadow-none !border-[var(--border-card)] rounded-[14px] p-6">
+          <div className="flex items-center justify-between border-b border-[var(--border-card)] pb-4">
+            <h3 className="font-semibold text-[16px] text-[var(--text-main)] font-display flex items-center gap-2.5">
+              <Calendar size={18} className="text-[var(--primary)]" />
+              Integração Google Calendar
+            </h3>
+            {config?.google_calendar_enabled && config?.google_refresh_token ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                <CheckCircle2 size={14} /> Conectado
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                <AlertCircle size={14} /> Desconectado
+              </span>
+            )}
+          </div>
+
+          <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
+            Conecte a conta Google do escritório (OAuth 2.0) para que os agendamentos feitos no CRM sejam sincronizados automaticamente com o Google Agenda.
+          </p>
+
+          {config && (
+            <div className="flex flex-col gap-5 max-w-lg">
+              <Input
+                label="Client ID (Google OAuth)"
+                placeholder="Ex: 123456789-abc...apps.googleusercontent.com"
+                value={config.google_client_id || ''}
+                onChange={(e) => setConfig({ ...config, google_client_id: e.target.value })}
+              />
+              <Input
+                label="Client Secret (Google OAuth)"
+                type="password"
+                placeholder="Ex: GOCSPX-..."
+                value={config.google_client_secret || ''}
+                onChange={(e) => setConfig({ ...config, google_client_secret: e.target.value })}
+              />
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between text-[13px] font-medium text-[var(--text-main)]">
+                  <span>ID da Agenda (Calendário)</span>
+                  {config.google_refresh_token && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        fetchGoogleCalendars()
+                      }}
+                      disabled={isLoadingCalendars}
+                      className="text-[11px] text-[var(--primary)] font-semibold hover:underline cursor-pointer flex items-center gap-1"
+                    >
+                      {isLoadingCalendars ? 'Buscando agendas...' : '🔄 Carregar minhas agendas do Google'}
+                    </button>
+                  )}
+                </div>
+
+                {googleCalendars.length > 0 && (
+                  <div className="flex flex-col gap-1 bg-[var(--bg-base)]/60 p-2.5 rounded-[10px] border border-[var(--border-card)] mb-1">
+                    <span className="text-[11px] font-semibold text-[var(--text-main)]">
+                      Agendas encontradas na sua conta Google ({googleCalendars.length}):
+                    </span>
+                    <select
+                      onChange={(e) => {
+                        if (e.target.value) setConfig({ ...config, google_calendar_id: e.target.value })
+                      }}
+                      value={config.google_calendar_id || 'primary'}
+                      className="w-full p-2 text-[12px] rounded-[8px] border border-[var(--border-card)] bg-[var(--bg-card)] text-[var(--text-main)] focus:outline-none focus:border-[var(--primary)] cursor-pointer"
+                    >
+                      <option value="primary">Agenda Principal (primary)</option>
+                      {googleCalendars.map((cal) => (
+                        <option key={cal.id} value={cal.id}>
+                          {cal.summary} — {cal.id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <Input
+                  placeholder="primary ou e-mail da agenda ou ID compartilhado"
+                  value={config.google_calendar_id || 'primary'}
+                  onChange={(e) => setConfig({ ...config, google_calendar_id: e.target.value })}
+                />
+                <span className="text-[11px] text-[var(--text-muted)]">
+                  Use "primary" para a agenda padrão da conta conectada ou selecione a agenda específica do seu escritório na lista.
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                <Button onClick={() => saveGoogleConfig(true)} isLoading={isSavingGoogle} variant="secondary">
+                  Salvar Credenciais
+                </Button>
+
+                {config.google_refresh_token ? (
+                  <Button onClick={handleDisconnectGoogle} variant="danger">
+                    Desconectar Google Calendar
+                  </Button>
+                ) : (
+                  <Button onClick={handleConnectGoogle} className="gap-2">
+                    <ExternalLink size={16} /> Conectar com Google
+                  </Button>
+                )}
               </div>
             </div>
           )}

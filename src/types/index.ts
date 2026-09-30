@@ -126,6 +126,11 @@ export interface OfficeConfig {
   favicon_url: string | null
   ia_pausada_global: boolean
   pausar_horario_comercial_ativo: boolean
+  google_client_id?: string | null
+  google_client_secret?: string | null
+  google_refresh_token?: string | null
+  google_calendar_id?: string | null
+  google_calendar_enabled?: boolean
   updated_at: string
 }
 
@@ -161,9 +166,12 @@ export interface AgendamentoAdv {
   cliente_id: string | null
   data_hora_inicio: string
   data_hora_fim: string
+  duracao_minutos?: number
   status: AgendamentoStatus
   modalidade: ModalidadeAtendimento
   observacoes: string | null
+  google_event_id?: string | null
+  google_event_url?: string | null
   created_at: string
   owner_id?: string | null
   // Joins
