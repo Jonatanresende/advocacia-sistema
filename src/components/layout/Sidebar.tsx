@@ -15,6 +15,7 @@ import {
   UserCog,
   User,
   MessageCircle,
+  PhoneCall,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useTheme } from '../../contexts/ThemeContext'
@@ -32,10 +33,11 @@ const navGroups = [
   {
     label: 'Atendimento',
     items: [
-      { to: '/kanban',     icon: Kanban,         label: 'Kanban' },
-      { to: '/chat',       icon: MessageSquare,  label: 'Chat' },
-      { to: '/leads',      icon: Users,          label: 'Leads' },
-      { to: '/mensagens',  icon: MessageCircle,  label: 'Mensagens' },
+      { to: '/kanban',        icon: Kanban,         label: 'Kanban' },
+      { to: '/chat',          icon: MessageSquare,  label: 'Chat' },
+      { to: '/chat-manual',   icon: PhoneCall,      label: 'Atendimento Manual' },
+      { to: '/leads',         icon: Users,          label: 'Leads' },
+      { to: '/mensagens',     icon: MessageCircle,  label: 'Mensagens' },
     ],
   },
   {
@@ -56,6 +58,8 @@ const adminItems = [
 interface SidebarProps {
   className?: string
   temNaoLido?: boolean
+  temNaoLidoManual?: boolean
+  totalNaoLidasManual?: number
   onNavigate?: () => void
 }
 
@@ -65,6 +69,7 @@ function NavItem({
   label,
   temNaoLido,
   badgeCount,
+  pulsante,
   onNavigate,
 }: {
   to: string
@@ -72,9 +77,11 @@ function NavItem({
   label: string
   temNaoLido?: boolean
   badgeCount?: number
+  pulsante?: boolean
   onNavigate?: () => void
 }) {
   const exibeAnimacaoNaoLido = to === '/chat' && temNaoLido
+  const exibePulsante = pulsante ?? false
 
   return (
     <NavLink
@@ -97,7 +104,7 @@ function NavItem({
             <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[var(--brand)] rounded-r-full" />
           )}
 
-          {/* Ícone com ponto pulsante em verde caso haja mensagem não lida */}
+          {/* Ícone com ponto pulsante verde em mensagens não lidas */}
           <div className="relative shrink-0 flex items-center justify-center">
             <Icon
               size={16}
@@ -106,22 +113,22 @@ function NavItem({
                 'group-hover:translate-x-0.5'
               )}
             />
-            {exibeAnimacaoNaoLido && (
+            {(exibeAnimacaoNaoLido || exibePulsante) && (
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-[var(--bg-sidebar)] animate-pulse" />
             )}
           </div>
 
           <span className="flex-1 truncate">{label}</span>
 
-          {/* Tag de contagem (badge) */}
+          {/* Badge de contagem */}
           {badgeCount !== undefined && badgeCount > 0 && (
             <div className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-[var(--primary)] px-1.5 text-[10px] font-bold text-white">
               {badgeCount}
             </div>
           )}
 
-          {/* Tag / ponto pulsante no lado direito caso haja mensagem não lida */}
-          {exibeAnimacaoNaoLido && (
+          {/* Ponto pulsante animado no lado direito */}
+          {(exibeAnimacaoNaoLido || exibePulsante) && badgeCount === undefined && (
             <span className="relative flex h-2 w-2 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -133,7 +140,7 @@ function NavItem({
   )
 }
 
-export default function Sidebar({ className, temNaoLido, onNavigate }: SidebarProps) {
+export default function Sidebar({ className, temNaoLido, temNaoLidoManual, totalNaoLidasManual, onNavigate }: SidebarProps) {
   const { theme, toggleTheme } = useTheme()
   const { perfil, isAdmin, permissoes, signOut } = useAuth()
   const navigate = useNavigate()
@@ -145,6 +152,7 @@ export default function Sidebar({ className, temNaoLido, onNavigate }: SidebarPr
   }
 
   const isVisible = (to: string) => {
+    if (to === '/chat-manual') return true
     if (isAdmin) return true
     return permissoes.includes(to)
   }
@@ -190,7 +198,14 @@ export default function Sidebar({ className, temNaoLido, onNavigate }: SidebarPr
                   icon={item.icon}
                   label={item.label}
                   temNaoLido={temNaoLido}
-                  badgeCount={item.to === '/mensagens' ? totalNaoLidas : undefined}
+                  badgeCount={
+                    item.to === '/mensagens'
+                      ? totalNaoLidas
+                      : item.to === '/chat-manual'
+                      ? totalNaoLidasManual
+                      : undefined
+                  }
+                  pulsante={item.to === '/chat-manual' ? temNaoLidoManual : undefined}
                   onNavigate={onNavigate}
                 />
               ))}

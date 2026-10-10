@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Play, Pause } from 'lucide-react'
+import { Play, Pause, AlertCircle } from 'lucide-react'
 
 function formatarTempo(segundos: number) {
   if (!isFinite(segundos) || segundos < 0) return '0:00'
@@ -19,10 +19,14 @@ export default function AudioMessage({ src, outgoing }: AudioMessageProps) {
   const [tocando, setTocando] = useState(false)
   const [atual, setAtual] = useState(0)
   const [duracao, setDuracao] = useState(0)
+  const [erro, setErro] = useState(false)
+
+  // Detecta se a URL é de mídia criptografada do WhatsApp (não reproduzível diretamente)
+  const srcInvalido = !src || src.includes('.enc') || src.includes('mmg.whatsapp.net')
 
   useEffect(() => {
     const audio = audioRef.current
-    if (!audio) return
+    if (!audio || srcInvalido) return
 
     const onTimeUpdate = () => setAtual(audio.currentTime)
     const onLoadedMeta = () => setDuracao(audio.duration || 0)
@@ -32,12 +36,14 @@ export default function AudioMessage({ src, outgoing }: AudioMessageProps) {
     }
     const onPause = () => setTocando(false)
     const onPlay = () => setTocando(true)
+    const onError = () => setErro(true)
 
     audio.addEventListener('timeupdate', onTimeUpdate)
     audio.addEventListener('loadedmetadata', onLoadedMeta)
     audio.addEventListener('ended', onEnded)
     audio.addEventListener('pause', onPause)
     audio.addEventListener('play', onPlay)
+    audio.addEventListener('error', onError)
 
     return () => {
       audio.removeEventListener('timeupdate', onTimeUpdate)
@@ -45,10 +51,11 @@ export default function AudioMessage({ src, outgoing }: AudioMessageProps) {
       audio.removeEventListener('ended', onEnded)
       audio.removeEventListener('pause', onPause)
       audio.removeEventListener('play', onPlay)
+      audio.removeEventListener('error', onError)
     }
-  }, [])
+  }, [srcInvalido])
 
-  const alternarPlay = () => {
+  const alternarPlay = async () => {
     const audio = audioRef.current
     if (!audio) return
 
@@ -57,7 +64,12 @@ export default function AudioMessage({ src, outgoing }: AudioMessageProps) {
       document.querySelectorAll<HTMLAudioElement>('audio[data-chat-audio]').forEach((el) => {
         if (el !== audio) el.pause()
       })
-      audio.play()
+      try {
+        await audio.play()
+      } catch (e) {
+        console.warn('Erro ao reproduzir áudio:', e)
+        setErro(true)
+      }
     } else {
       audio.pause()
     }
@@ -73,6 +85,20 @@ export default function AudioMessage({ src, outgoing }: AudioMessageProps) {
 
   const progresso = duracao > 0 ? (atual / duracao) * 100 : 0
   const tempoExibido = tocando || atual > 0 ? atual : duracao
+
+  // Áudio não disponível (criptografado ou inválido)
+  if (srcInvalido || erro) {
+    return (
+      <div
+        className={`flex items-center gap-2 min-w-[180px] py-0.5 text-[11px] ${
+          outgoing ? 'text-white/60' : 'text-[var(--text-muted)]'
+        }`}
+      >
+        <AlertCircle size={15} className="shrink-0 opacity-60" />
+        <span>Áudio não disponível</span>
+      </div>
+    )
+  }
 
   return (
     <div className="flex items-center gap-2.5 min-w-[220px] max-w-[260px] py-0.5">
@@ -105,7 +131,6 @@ export default function AudioMessage({ src, outgoing }: AudioMessageProps) {
           onChange={buscarPosicao}
           className={`audio-seek w-full ${outgoing ? 'audio-seek--outgoing' : 'audio-seek--incoming'}`}
           style={{
-            // Preenche a trilha até a posição atual, como no WhatsApp
             backgroundImage: `linear-gradient(to right, currentColor ${progresso}%, transparent ${progresso}%)`,
           }}
         />

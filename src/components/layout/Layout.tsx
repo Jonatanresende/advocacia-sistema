@@ -5,10 +5,12 @@ import Header from './Header'
 import { X } from 'lucide-react'
 import { useNotificacaoLeads } from '../../hooks/useNotificacaoLeads'
 import { useNotificacaoMensagens } from '../../hooks/useNotificacaoMensagens'
+import { useNotificacaoManual } from '../../hooks/useNotificacaoManual'
 
 export default function Layout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { temNaoLido } = useNotificacaoLeads()
+  const { temNaoLido: temNaoLidoManual, totalNaoLidas: totalNaoLidasManual } = useNotificacaoManual()
 
   // Notificação sonora de mensagens internas — ativo em qualquer página
   useNotificacaoMensagens()
@@ -16,7 +18,7 @@ export default function Layout() {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[var(--bg-base)]">
       {/* Sidebar — desktop */}
-      <Sidebar className="hidden md:flex" temNaoLido={temNaoLido} />
+      <Sidebar className="hidden md:flex" temNaoLido={temNaoLido} temNaoLidoManual={temNaoLidoManual} totalNaoLidasManual={totalNaoLidasManual} />
 
       {/* Gaveta mobile */}
       {isMobileMenuOpen && (
@@ -42,6 +44,8 @@ export default function Layout() {
             <Sidebar
               className="flex border-r-0"
               temNaoLido={temNaoLido}
+              temNaoLidoManual={temNaoLidoManual}
+              totalNaoLidasManual={totalNaoLidasManual}
               onNavigate={() => setIsMobileMenuOpen(false)}
             />
           </div>

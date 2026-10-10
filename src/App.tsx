@@ -19,6 +19,7 @@ import Usuarios from './pages/Usuarios'
 import UsuarioDetalhe from './pages/UsuarioDetalhe'
 import MeuPerfil from './pages/MeuPerfil'
 import Mensagens from './pages/Mensagens'
+import ChatManual from './pages/ChatManual'
 
 export default function App() {
   return (
@@ -59,6 +60,7 @@ export default function App() {
                   {/* Sempre acessível a qualquer usuário logado, independente do papel */}
                   <Route path="/meu-perfil" element={<MeuPerfil />} />
                   <Route path="/mensagens" element={<Mensagens />} />
+                  <Route path="/chat-manual" element={<ChatManual />} />
 
                   {/* Admin Only Routes */}
                   <Route element={<AdminRoute />}>

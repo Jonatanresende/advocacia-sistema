@@ -240,3 +240,33 @@ export interface MensagemInterna {
   // Join opcional
   remetente?: Perfil
 }
+
+// ─── 2º WHATSAPP (ATENDIMENTO MANUAL) ──────────────────────────────────────
+
+export interface ContatoManual {
+  id: string
+  nome: string | null
+  whatsapp: string
+  observacoes?: string | null
+  ultima_mensagem?: string | null
+  created_at: string
+  updated_at: string
+  // Campos auxiliares no frontend
+  naoLidas?: number
+  ultimaMensagemMs?: number
+}
+
+export interface MensagemManual {
+  id: string
+  contato_id: string
+  usuario_id?: string | null
+  tipo_remetente: 'cliente' | 'atendente'
+  conteudo: string | null
+  tipo_midia: 'texto' | 'imagem' | 'pdf' | 'video' | 'audio' | 'arquivo'
+  midia_url?: string | null
+  metadata?: Record<string, unknown> | null
+  lida: boolean
+  created_at: string
+  // Join opcional
+  usuario?: Perfil
+}
