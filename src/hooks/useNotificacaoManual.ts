@@ -198,10 +198,16 @@ export function useNotificacaoManual() {
     return () => { cancelado = true }
   }, [atualizarBadge])
 
+  const processarRef = useRef(processarNovaMensagem)
+  useEffect(() => {
+    processarRef.current = processarNovaMensagem
+  }, [processarNovaMensagem])
+
   // ── 2. Realtime — novas mensagens do cliente ───────────────────────────
   useEffect(() => {
+    const channelName = `manual-notificacoes-${Math.random().toString(36).substring(2, 9)}`
     const channel = supabase
-      .channel('manual-notificacoes-realtime')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -213,7 +219,7 @@ export function useNotificacaoManual() {
         (payload) => {
           const nova = payload.new as { contato_id: string }
           if (nova?.contato_id) {
-            processarNovaMensagem(nova.contato_id)
+            processarRef.current(nova.contato_id)
           }
         }
       )
@@ -228,8 +234,10 @@ export function useNotificacaoManual() {
       )
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
-  }, [processarNovaMensagem])
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   // ── 3. Polling de segurança a cada 15s ────────────────────────────────
   useEffect(() => {

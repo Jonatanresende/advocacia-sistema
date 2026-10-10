@@ -199,17 +199,23 @@ export function useNotificacaoLeads() {
     }
   }, [atualizarStatusNaoLido])
 
+  const processarRef = useRef(processarSnapshot)
+  useEffect(() => {
+    processarRef.current = processarSnapshot
+  }, [processarSnapshot])
+
   // ─── 2. Realtime (Supabase WebSocket instantâneo) ──────────────────────
   useEffect(() => {
+    const channelName = `leads-notificacoes-${Math.random().toString(36).substring(2, 9)}`
     const channel = supabase
-      .channel('leads-notificacoes-realtime')
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'leads_adv' },
         (payload) => {
           const novo = payload.new as LeadSnapshot
           if (novo && novo.id_conversa_chatwoot) {
-            processarSnapshot(novo)
+            processarRef.current(novo)
           }
         }
       )
@@ -218,7 +224,7 @@ export function useNotificacaoLeads() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [processarSnapshot])
+  }, [])
 
   // ─── 3. Polling de segurança a cada 10 segundos (Direto no Banco, 1 única query) ─
   useEffect(() => {

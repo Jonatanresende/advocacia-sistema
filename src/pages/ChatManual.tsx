@@ -4,6 +4,7 @@ import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
 import { useContatosManual, useConversaManual } from '../hooks/useChatManual'
 import { useGravadorAudio } from '../hooks/useGravadorAudio'
+import { useNotificacaoManual } from '../hooks/useNotificacaoManual'
 import type { ContatoManual, MensagemManual } from '../types'
 import { format } from 'date-fns'
 import {
@@ -24,9 +25,17 @@ import {
   Edit2,
   Phone,
   User,
+  Download as DownloadCloud,
+  RefreshCw,
+  CheckSquare,
+  Square as SquareIcon,
+  Users,
+  Bell,
 } from 'lucide-react'
 import AudioMessage from '../components/chat/AudioMessage'
 import EmojiPickerPopover from '../components/chat/EmojiPickerPopover'
+import ImportarContatosModal from '../components/chat/ImportarContatosModal'
+import { supabase } from '../lib/supabase'
 
 function formatarTempoGravacao(segundos: number) {
   const min = Math.floor(segundos / 60)
@@ -381,12 +390,14 @@ function BalaoManual({
 // ─── PÁGINA PRINCIPAL ───────────────────────────────────────────────────
 export default function ChatManual() {
   const { contatos, isLoading: carregandoContatos, salvarContato, atualizarContato } = useContatosManual()
+  const { permissaoNotificacao, solicitarPermissao } = useNotificacaoManual()
   const [contatoSelecionado, setContatoSelecionado] = useState<ContatoManual | null>(null)
   const [busca, setBusca] = useState('')
   const [texto, setTexto] = useState('')
   const [arquivoAnexado, setArquivoAnexado] = useState<File | null>(null)
   const [mostrarEmojiPicker, setMostrarEmojiPicker] = useState(false)
   const [modalContatoAberto, setModalContatoAberto] = useState(false)
+  const [modalImportarAberto, setModalImportarAberto] = useState(false)
   const [contatoParaEditar, setContatoParaEditar] = useState<ContatoManual | null>(null)
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
   const [midiaModal, setMidiaModal] = useState<MediaPreview | null>(null)
@@ -489,13 +500,33 @@ export default function ChatManual() {
     }
   }
 
+  const handleImportarContatos = useCallback(async (contatosEvo: { nome: string | null; whatsapp: string }[]) => {
+    for (const c of contatosEvo) {
+      await salvarContato(c.nome || '', c.whatsapp)
+    }
+  }, [salvarContato])
+
+  const whatsappsExistentes = useMemo(() => contatos.map((c) => c.whatsapp), [contatos])
+
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-7.5rem)] min-h-[500px]">
-      <div className="shrink-0 mb-3">
+      <div className="shrink-0 mb-3 flex items-center justify-between gap-4">
         <PageHeader
           title="Atendimento Manual (2º WhatsApp)"
           description="Atendimento humano direto para conversas fora de automações. Salve contatos e troque mensagens com fotos, vídeos, PDFs e gravações de voz."
         />
+
+        {permissaoNotificacao === 'default' && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={solicitarPermissao}
+            className="shrink-0 hidden sm:flex items-center gap-2 text-xs border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
+          >
+            <Bell size={14} className="animate-bounce" />
+            Ativar Notificações
+          </Button>
+        )}
       </div>
 
       <Card noPadding className="flex-1 min-h-0 overflow-hidden">
@@ -507,7 +538,7 @@ export default function ChatManual() {
               mobileView === 'list' ? 'flex' : 'hidden md:flex'
             }`}
           >
-            {/* Search & Novo Contato */}
+            {/* Search & Botões */}
             <div className="p-3 border-b border-[var(--border-card)] space-y-2">
               <Button
                 variant="primary"
@@ -516,6 +547,14 @@ export default function ChatManual() {
                 className="w-full flex items-center justify-center gap-2"
               >
                 <UserPlus size={14} /> Novo Contato
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setModalImportarAberto(true)}
+                className="w-full flex items-center justify-center gap-2"
+              >
+                <Users size={14} /> Importar do WhatsApp
               </Button>
               <div className="relative">
                 <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
@@ -760,6 +799,16 @@ export default function ChatManual() {
         contatoParaEditar={contatoParaEditar}
         onFechar={() => setModalContatoAberto(false)}
         onSalvar={handleSalvarContatoForm}
+      />
+
+      {/* Modal de Importação de Contatos do WhatsApp */}
+      <ImportarContatosModal
+        aberto={modalImportarAberto}
+        contatosExistentes={contatos}
+        onFechar={() => setModalImportarAberto(false)}
+        onContatosImportados={() => {
+          // Os contatos são atualizados automaticamente via realtime do useContatosManual
+        }}
       />
 
       {/* Modal de Preview de Mídia */}

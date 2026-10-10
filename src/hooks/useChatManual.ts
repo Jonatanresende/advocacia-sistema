@@ -126,9 +126,9 @@ export function useContatosManual() {
   useEffect(() => {
     fetchContatos()
 
-    // Supabase Realtime nas duas tabelas
+    const channelName = `realtime-contatos-whatsapp-manual-${Math.random().toString(36).substring(2, 9)}`
     const channel = supabase
-      .channel('realtime-contatos-whatsapp-manual')
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'contatos_whatsapp_manual' },
@@ -210,9 +210,9 @@ export function useConversaManual(contato: ContatoManual | null) {
 
     fetchMensagens(contato.id)
 
-    // Inscrição Realtime na conversa aberta
+    const channelName = `conversa-manual-${contato.id}-${Math.random().toString(36).substring(2, 9)}`
     const channel = supabase
-      .channel(`conversa-manual-${contato.id}`)
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
