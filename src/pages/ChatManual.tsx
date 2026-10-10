@@ -25,17 +25,12 @@ import {
   Edit2,
   Phone,
   User,
-  Download as DownloadCloud,
-  RefreshCw,
-  CheckSquare,
-  Square as SquareIcon,
   Users,
   Bell,
 } from 'lucide-react'
 import AudioMessage from '../components/chat/AudioMessage'
 import EmojiPickerPopover from '../components/chat/EmojiPickerPopover'
 import ImportarContatosModal from '../components/chat/ImportarContatosModal'
-import { supabase } from '../lib/supabase'
 
 function formatarTempoGravacao(segundos: number) {
   const min = Math.floor(segundos / 60)
@@ -499,14 +494,6 @@ export default function ChatManual() {
       return novocontato
     }
   }
-
-  const handleImportarContatos = useCallback(async (contatosEvo: { nome: string | null; whatsapp: string }[]) => {
-    for (const c of contatosEvo) {
-      await salvarContato(c.nome || '', c.whatsapp)
-    }
-  }, [salvarContato])
-
-  const whatsappsExistentes = useMemo(() => contatos.map((c) => c.whatsapp), [contatos])
 
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] md:h-[calc(100vh-7.5rem)] min-h-[500px]">

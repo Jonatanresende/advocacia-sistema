@@ -341,7 +341,7 @@ export default function ImportarContatosModal({
                             )}
                           </div>
                         ) : (
-                          <UserCheck size={16} className="text-emerald-500 shrink-0" title="Já cadastrado" />
+                          <UserCheck size={16} className="text-emerald-500 shrink-0" />
                         )}
 
                         <div className="w-8 h-8 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] font-semibold flex items-center justify-center text-xs shrink-0 overflow-hidden">
