@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../contexts/ToastContext'
+import { useNotificationSound } from '../contexts/NotificationSoundContext'
 
 type ContatoSnapshot = {
   id: string
@@ -9,35 +10,7 @@ type ContatoSnapshot = {
   ultima_mensagem: string | null
 }
 
-// ── Som de notificação (dois bipes ascendentes estilo iOS) ────────────────
-function tocarSomNotificacao() {
-  try {
-    const ctx = new (window.AudioContext ||
-      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
 
-    const tocarBipe = (frequencia: number, inicio: number, duracao: number, volume: number) => {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.connect(gain)
-      gain.connect(ctx.destination)
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(frequencia, ctx.currentTime + inicio)
-      osc.frequency.linearRampToValueAtTime(frequencia * 1.08, ctx.currentTime + inicio + duracao * 0.6)
-      gain.gain.setValueAtTime(0, ctx.currentTime + inicio)
-      gain.gain.linearRampToValueAtTime(volume, ctx.currentTime + inicio + 0.01)
-      gain.gain.setValueAtTime(volume, ctx.currentTime + inicio + duracao * 0.5)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + inicio + duracao)
-      osc.start(ctx.currentTime + inicio)
-      osc.stop(ctx.currentTime + inicio + duracao + 0.05)
-    }
-
-    tocarBipe(880, 0, 0.12, 0.25)
-    tocarBipe(1175, 0.15, 0.12, 0.25)
-    setTimeout(() => ctx.close(), 800)
-  } catch {
-    // Navegador sem Web Audio API
-  }
-}
 
 // ── Notificação nativa do SO (funciona com aba em segundo plano) ──────────
 function dispararNotificacaoBrowser(nome: string | null, whatsapp: string, texto?: string | null) {
@@ -88,6 +61,7 @@ export function useNotificacaoManual() {
   const [temNaoLido, setTemNaoLido] = useState(false)
   const [totalNaoLidas, setTotalNaoLidas] = useState(0)
   const { success } = useToast()
+  const { tocarSomCanal } = useNotificationSound()
 
   // Refs para não perder estado entre re-renders
   const contatosRef = useRef<ContatoSnapshot[]>([])
@@ -119,11 +93,11 @@ export function useNotificacaoManual() {
         ? ` "${texto.substring(0, 50)}${texto.length > 50 ? '...' : ''}"`
         : ''
 
-      tocarSomNotificacao()
+      tocarSomCanal('manual')
       success(`📱 ${nomeExibido}:${resumo}`)
       dispararNotificacaoBrowser(nome, whatsapp, texto)
     },
-    [success]
+    [success, tocarSomCanal]
   )
 
   // ── Processa nova mensagem recebida via Realtime ───────────────────────

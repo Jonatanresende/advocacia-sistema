@@ -2,39 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../contexts/ToastContext'
 import { useAuth } from '../contexts/AuthContext'
+import { useNotificationSound } from '../contexts/NotificationSoundContext'
 import type { MensagemInterna, Perfil } from '../types'
 
-/**
- * Toca dois bipes suaves ascendentes (padrão iOS) via Web Audio API.
- * Idêntico ao som usado no chat de atendimento de leads.
- */
-async function tocarSomNotificacao() {
-    try {
-        const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-        const ctx = new AudioCtx()
-        if (ctx.state === 'suspended') await ctx.resume()
-        const tocarBipe = (frequencia: number, inicio: number, duracao: number, volume: number) => {
-            const osc = ctx.createOscillator()
-            const ganho = ctx.createGain()
-            osc.connect(ganho)
-            ganho.connect(ctx.destination)
-            osc.type = 'sine'
-            osc.frequency.setValueAtTime(frequencia, ctx.currentTime + inicio)
-            osc.frequency.linearRampToValueAtTime(frequencia * 1.08, ctx.currentTime + inicio + duracao * 0.6)
-            ganho.gain.setValueAtTime(0, ctx.currentTime + inicio)
-            ganho.gain.linearRampToValueAtTime(volume, ctx.currentTime + inicio + 0.01)
-            ganho.gain.setValueAtTime(volume, ctx.currentTime + inicio + duracao * 0.5)
-            ganho.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + inicio + duracao)
-            osc.start(ctx.currentTime + inicio)
-            osc.stop(ctx.currentTime + inicio + duracao + 0.05)
-        }
-        tocarBipe(880, 0, 0.12, 0.25)
-        tocarBipe(1175, 0.15, 0.12, 0.25)
-        setTimeout(() => ctx.close(), 800)
-    } catch {
-        // Navegador sem suporte à Web Audio API — ignora silenciosamente
-    }
-}
+
 
 export interface ConversaResumo {
     usuario: Perfil
@@ -122,6 +93,7 @@ export function useMensagensConversa(outroUsuarioId: string | null) {
     const [isLoading, setIsLoading] = useState(true)
     const [isSending, setIsSending] = useState(false)
     const { error } = useToast()
+    const { tocarSomCanal } = useNotificationSound()
     const meuId = perfil?.id
 
     const fetchMensagens = useCallback(async () => {
@@ -168,7 +140,7 @@ export function useMensagensConversa(outroUsuarioId: string | null) {
                 setMensagens((prev) => [...prev, nova])
                 // Toca som e marca como lida apenas quando a mensagem vier do OUTRO usuário
                 if (nova.destinatario_id === meuId) {
-                    tocarSomNotificacao()
+                    tocarSomCanal('mensagens')
                     supabase.from('mensagens_internas').update({ lida: true }).eq('id', nova.id).then()
                 }
             })

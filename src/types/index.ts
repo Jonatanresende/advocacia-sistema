@@ -217,6 +217,17 @@ export interface Perfil {
   telefone: string | null
   advogado_id: string | null
   created_at: string
+  notif_som_chat?: boolean
+  notif_som_manual?: boolean
+  notif_som_mensagens?: boolean
+}
+
+export type CanalNotificacaoSom = 'chat' | 'manual' | 'mensagens'
+
+export interface NotificacoesSomConfig {
+  chat: boolean
+  manual: boolean
+  mensagens: boolean
 }
 
 export interface PermissaoRole {

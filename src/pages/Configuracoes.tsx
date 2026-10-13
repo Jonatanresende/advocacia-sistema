@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import PageHeader from '../components/ui/PageHeader'
 import Card from '../components/ui/Card'
 import Input from '../components/ui/Input'
@@ -6,7 +7,7 @@ import Button from '../components/ui/Button'
 import { supabase } from '../lib/supabase'
 import type { OfficeConfig, OfficeHours, DiaSemana, PermissaoRole } from '../types'
 import { useToast } from '../contexts/ToastContext'
-import { Building2, Clock, Shield, Bot, Calendar, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react'
+import { Building2, Clock, Shield, Bot, Calendar, CheckCircle2, AlertCircle, ExternalLink, Volume2 } from 'lucide-react'
 import clsx from 'clsx'
 
 const DIAS_ORDEM: DiaSemana[] = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado']
@@ -606,6 +607,31 @@ export default function Configuracoes() {
               <Button onClick={saveHours} isLoading={isSavingHours}>Salvar Horários</Button>
             </div>
           </div>
+        </Card>
+
+        {/* Notificações Sonoras (Aviso aos Administradores) */}
+        <Card className="flex flex-col gap-4 shadow-none !border-[var(--border-card)] rounded-[14px] p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-card)] pb-4">
+            <div>
+              <h3 className="font-semibold text-[16px] text-[var(--text-main)] font-display flex items-center gap-2.5">
+                <Volume2 size={18} className="text-[var(--primary)]" />
+                Sons de Notificação (Chat, Atendimento Manual e Mensagens)
+              </h3>
+              <p className="text-[12px] text-[var(--text-muted)] mt-1">
+                Controle individual dos alertas sonoros para cada membro do escritório.
+              </p>
+            </div>
+            <Link
+              to="/meu-perfil"
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-[10px] bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white transition-all text-[12.5px] font-semibold self-start sm:self-auto"
+            >
+              Configurar em Meu Perfil
+              <ExternalLink size={13} />
+            </Link>
+          </div>
+          <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
+            As notificações sonoras são <strong>individuais por usuário</strong> e ficam disponíveis em <strong>Meu Perfil</strong>. Dessa forma, todos os usuários (administradores, advogados e funcionários) podem ativar ou pausar o som de notificação de cada uma das 3 páginas de mensagens independentemente, sem misturar preferências.
+          </p>
         </Card>
       </div>
     </div>

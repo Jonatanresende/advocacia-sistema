@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
+import clsx from 'clsx'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useToast } from '../contexts/ToastContext'
+import { useNotificationSound } from '../contexts/NotificationSoundContext'
 import {
   User,
   Mail,
@@ -14,8 +16,14 @@ import {
   CheckCircle2,
   Briefcase,
   UserCheck,
+  Volume2,
+  VolumeX,
+  MessageSquare,
+  MessageCircle,
+  PhoneCall,
+  Check,
 } from 'lucide-react'
-import type { UserRole } from '../types'
+import type { UserRole, CanalNotificacaoSom } from '../types'
 
 const ROLE_INFO: Record<UserRole, { label: string; icon: React.ElementType; color: string }> = {
   admin: {
@@ -59,6 +67,62 @@ export default function MeuPerfil() {
   const [showNovaSenha, setShowNovaSenha] = useState(false)
   const [isSavingSenha, setIsSavingSenha] = useState(false)
   const [senhaSucesso, setSenhaSucesso] = useState(false)
+
+  // Notification sound settings
+  const {
+    config: soundConfig,
+    toggleSom,
+    pausarTodos,
+    ativarTodos,
+    tocarSomTeste,
+  } = useNotificationSound()
+  const [tocandoTeste, setTocandoTeste] = useState(false)
+
+  const handleTestarSom = () => {
+    setTocandoTeste(true)
+    tocarSomTeste()
+    setTimeout(() => setTocandoTeste(false), 800)
+  }
+
+  const todosSonsAtivos = soundConfig.chat && soundConfig.manual && soundConfig.mensagens
+
+  const canaisMensagens: Array<{
+    id: CanalNotificacaoSom
+    nome: string
+    subtitulo: string
+    rota: string
+    icon: React.ElementType
+    corIcon: string
+    corBg: string
+  }> = [
+    {
+      id: 'chat',
+      nome: 'Chat',
+      subtitulo: 'Leads e Atendimento IA (WhatsApp principal)',
+      rota: '/chat',
+      icon: MessageSquare,
+      corIcon: 'text-emerald-400',
+      corBg: 'bg-emerald-500/15 border-emerald-500/30',
+    },
+    {
+      id: 'manual',
+      nome: 'Atendimento Manual',
+      subtitulo: '2º WhatsApp de atendimento manual',
+      rota: '/chat-manual',
+      icon: PhoneCall,
+      corIcon: 'text-blue-400',
+      corBg: 'bg-blue-500/15 border-blue-500/30',
+    },
+    {
+      id: 'mensagens',
+      nome: 'Mensagens',
+      subtitulo: 'Mensagens diretas internas entre usuários do sistema',
+      rota: '/mensagens',
+      icon: MessageCircle,
+      corIcon: 'text-purple-400',
+      corBg: 'bg-purple-500/15 border-purple-500/30',
+    },
+  ]
 
   useEffect(() => {
     if (perfil) {
@@ -236,6 +300,163 @@ export default function MeuPerfil() {
                 Salvar Perfil
               </button>
             </form>
+          </div>
+
+          {/* Notificações de Som (Mensagens) */}
+          <div className="bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[14px] p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-[15px] font-display font-semibold text-[var(--text-main)] flex items-center gap-2">
+                  <Volume2 size={16} className="text-[var(--primary)]" />
+                  Notificações de Som
+                </h2>
+                <p className="text-[12px] text-[var(--text-muted)] mt-1">
+                  Escolha em quais canais de mensagens você deseja ouvir o alerta sonoro.
+                </p>
+              </div>
+
+              {/* Botões de Ação Rápida */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleTestarSom}
+                  className={clsx(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[12px] font-medium border transition-all',
+                    tocandoTeste
+                      ? 'bg-[var(--primary)] text-white border-[var(--primary)] scale-95 shadow-md shadow-[var(--primary)]/20'
+                      : 'bg-[var(--bg-base)] hover:bg-[var(--primary)]/10 text-[var(--text-main)] border-[var(--border-card)]'
+                  )}
+                  title="Tocar som de notificação para teste"
+                >
+                  <Volume2 size={13} className={tocandoTeste ? 'animate-bounce text-white' : 'text-[var(--primary)]'} />
+                  <span>{tocandoTeste ? 'Tocando...' : 'Testar Som'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={todosSonsAtivos ? () => pausarTodos() : () => ativarTodos()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[12px] font-medium bg-[var(--bg-base)] hover:bg-[var(--border-card)] text-[var(--text-muted)] hover:text-[var(--text-main)] border border-[var(--border-card)] transition-colors"
+                >
+                  {todosSonsAtivos ? (
+                    <>
+                      <VolumeX size={13} className="text-amber-400" />
+                      <span>Pausar Todos</span>
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 size={13} className="text-emerald-400" />
+                      <span>Ativar Todos</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Aviso explicativo */}
+            <div className="p-3 rounded-[10px] bg-[var(--bg-base)] border border-[var(--border-card)] flex items-start gap-2.5 text-[12px] text-[var(--text-muted)]">
+              <CheckCircle2 size={15} className="text-emerald-400 shrink-0 mt-0.5" />
+              <p className="leading-relaxed">
+                <strong className="text-[var(--text-main)] font-semibold">Importante:</strong> As mensagens continuam chegando normalmente em tempo real, com contadores de não lidas e alertas visuais no menu. O botão de check apenas <strong className="text-[var(--text-main)]">pausa ou ativa o som</strong> da notificação para cada canal.
+              </p>
+            </div>
+
+            {/* Lista dos 3 Canais com Checkbox / Toggle Switch */}
+            <div className="space-y-3">
+              {canaisMensagens.map((canal) => {
+                const ativo = soundConfig[canal.id]
+                const Icone = canal.icon
+
+                return (
+                  <div
+                    key={canal.id}
+                    onClick={() => toggleSom(canal.id)}
+                    className={clsx(
+                      'group flex items-center justify-between p-3.5 rounded-[12px] border transition-all cursor-pointer',
+                      ativo
+                        ? 'bg-[var(--bg-base)] border-[var(--border-card)] hover:border-[var(--primary)]/40 hover:shadow-sm'
+                        : 'bg-[var(--bg-base)]/50 border-[var(--border-card)]/60 opacity-80 hover:opacity-100'
+                    )}
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0 pr-3">
+                      {/* Ícone estilizado do canal */}
+                      <div
+                        className={clsx(
+                          'w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 border transition-transform duration-150 group-hover:scale-105',
+                          canal.corBg
+                        )}
+                      >
+                        <Icone size={17} className={canal.corIcon} />
+                      </div>
+
+                      {/* Informações do canal */}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[13.5px] font-semibold text-[var(--text-main)] truncate">
+                            {canal.nome}
+                          </span>
+                          <span className="text-[10.5px] font-mono px-1.5 py-0.5 rounded bg-[var(--bg-card)] border border-[var(--border-card)] text-[var(--text-muted)]">
+                            {canal.rota}
+                          </span>
+                        </div>
+                        <p className="text-[11.5px] text-[var(--text-muted)] truncate mt-0.5">
+                          {canal.subtitulo}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Botão de Check / Switch Toggle */}
+                    <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      {/* Badge de status */}
+                      <span
+                        className={clsx(
+                          'hidden sm:inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border',
+                          ativo
+                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                            : 'bg-slate-500/10 border-slate-500/20 text-[var(--text-muted)]'
+                        )}
+                      >
+                        {ativo ? (
+                          <>
+                            <Volume2 size={11} />
+                            Som Ativo
+                          </>
+                        ) : (
+                          <>
+                            <VolumeX size={11} />
+                            Som Pausado
+                          </>
+                        )}
+                      </span>
+
+                      {/* Checkbox Switch Toggle estilizado */}
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={ativo}
+                        aria-label={`Alternar som para ${canal.nome}`}
+                        onClick={() => toggleSom(canal.id)}
+                        className={clsx(
+                          'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[var(--primary)]',
+                          ativo
+                            ? 'bg-emerald-500'
+                            : 'bg-slate-600/60 dark:bg-slate-700'
+                        )}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={clsx(
+                            'pointer-events-none inline-flex h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out items-center justify-center',
+                            ativo ? 'translate-x-5 text-emerald-600' : 'translate-x-0 text-slate-400'
+                          )}
+                        >
+                          {ativo ? <Check size={11} strokeWidth={3} /> : null}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
 
           {/* Alterar Senha */}

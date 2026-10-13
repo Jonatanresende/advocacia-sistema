@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useToast } from '../contexts/ToastContext'
+import { useNotificationSound } from '../contexts/NotificationSoundContext'
 
 type LeadSnapshot = {
   id: string
@@ -11,41 +12,7 @@ type LeadSnapshot = {
   visto_em: string | null
 }
 
-/**
- * Gera e toca um som de notificação estilo iOS (dois bipes suaves ascendentes).
- */
-function tocarSomNotificacao() {
-  try {
-    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
 
-    const tocarBipe = (frequencia: number, inicio: number, duracao: number, volume: number) => {
-      const oscilador = ctx.createOscillator()
-      const ganho = ctx.createGain()
-
-      oscilador.connect(ganho)
-      ganho.connect(ctx.destination)
-
-      oscilador.type = 'sine'
-      oscilador.frequency.setValueAtTime(frequencia, ctx.currentTime + inicio)
-      oscilador.frequency.linearRampToValueAtTime(frequencia * 1.08, ctx.currentTime + inicio + duracao * 0.6)
-
-      ganho.gain.setValueAtTime(0, ctx.currentTime + inicio)
-      ganho.gain.linearRampToValueAtTime(volume, ctx.currentTime + inicio + 0.01)
-      ganho.gain.setValueAtTime(volume, ctx.currentTime + inicio + duracao * 0.5)
-      ganho.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + inicio + duracao)
-
-      oscilador.start(ctx.currentTime + inicio)
-      oscilador.stop(ctx.currentTime + inicio + duracao + 0.05)
-    }
-
-    tocarBipe(880, 0, 0.12, 0.25)
-    tocarBipe(1175, 0.15, 0.12, 0.25)
-
-    setTimeout(() => ctx.close(), 800)
-  } catch {
-    // Ignora se áudio for bloqueado
-  }
-}
 
 /**
  * Dispara notificação nativa do navegador/SO.
@@ -93,6 +60,7 @@ export function useNotificacaoLeads() {
   )
   const [temNaoLido, setTemNaoLido] = useState(false)
   const { success } = useToast()
+  const { tocarSomCanal } = useNotificationSound()
 
   // Lista de leads guardada em ref para avaliação de mensagens não lidas
   const leadsListaRef = useRef<LeadSnapshot[]>([])
@@ -135,10 +103,10 @@ export function useNotificacaoLeads() {
     const nome = nomeLead?.trim() || whatsapp
     const resumo = texto?.trim() ? ` "${texto.substring(0, 50)}${texto.length > 50 ? '...' : ''}"` : ''
 
-    tocarSomNotificacao()
+    tocarSomCanal('chat')
     success(`💬 ${nome}:${resumo}`)
     dispararNotificacaoBrowser(nomeLead, whatsapp, texto)
-  }, [success])
+  }, [success, tocarSomCanal])
 
   const processarSnapshot = useCallback((lead: LeadSnapshot) => {
     // Atualiza a lista guardada na ref

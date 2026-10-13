@@ -21,6 +21,8 @@ interface AuthContextType {
   permissoes: string[]
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
+  atualizarPerfilLocal: (dados: Partial<Perfil>) => void
+  recarregarPerfil: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -124,6 +126,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
   }
 
+  const atualizarPerfilLocal = (dados: Partial<Perfil>) => {
+    setPerfil((prev) => (prev ? { ...prev, ...dados } : null))
+  }
+
+  const recarregarPerfil = async () => {
+    if (user) {
+      await loadUserData(user)
+    }
+  }
+
   const role = perfil?.role ?? null
   const isAdmin = role === 'admin'
   const isAdvogado = role === 'advogado'
@@ -143,6 +155,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         permissoes,
         signIn,
         signOut,
+        atualizarPerfilLocal,
+        recarregarPerfil,
       }}
     >
       {children}

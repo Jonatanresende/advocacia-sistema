@@ -20,6 +20,7 @@ import UsuarioDetalhe from './pages/UsuarioDetalhe'
 import MeuPerfil from './pages/MeuPerfil'
 import Mensagens from './pages/Mensagens'
 import ChatManual from './pages/ChatManual'
+import { NotificationSoundProvider } from './contexts/NotificationSoundContext'
 
 export default function App() {
   return (
@@ -27,11 +28,12 @@ export default function App() {
       <ToastProvider>
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <NotificationSoundProvider>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-              <Route element={<ProtectedRoute />}>
+                <Route element={<ProtectedRoute />}>
                 <Route element={<Layout />}>
                   <Route element={<RestrictedRoute rota="/dashboard" />}>
                     <Route path="/dashboard" element={<Dashboard />} />
@@ -74,8 +76,9 @@ export default function App() {
 
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
-          </AuthProvider>
-        </BrowserRouter>
+          </NotificationSoundProvider>
+        </AuthProvider>
+      </BrowserRouter>
       </ToastProvider>
     </ThemeProvider>
   )
