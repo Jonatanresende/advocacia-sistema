@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Search, X, DownloadCloud, CheckSquare, Square, RefreshCw, UserCheck, PlusCircle } from 'lucide-react'
 import Button from '../ui/Button'
 import { supabase } from '../../lib/supabase'
+import { normalizarNumero } from '../../hooks/useChatManual'
 
 interface ContatoEvolution {
   remoteJid: string
@@ -41,7 +42,7 @@ export default function ImportarContatosModal({
 
   // Conjunto de WhatsApps já cadastrados no CRM para fácil checagem
   const setExistentes = new Set(
-    contatosExistentes.map((c) => c.whatsapp.replace(/\D/g, ''))
+    contatosExistentes.map((c) => normalizarNumero(c.whatsapp))
   )
 
   const handleBuscar = async () => {
@@ -65,7 +66,7 @@ export default function ImportarContatosModal({
       // Marca quais já existem no CRM
       const listaComStatus = lista.map((c) => ({
         ...c,
-        existsInCrm: setExistentes.has(c.number.replace(/\D/g, '')),
+        existsInCrm: setExistentes.has(normalizarNumero(c.number)),
       }))
 
       setContatos(listaComStatus)
@@ -125,7 +126,7 @@ export default function ImportarContatosModal({
     setImportingId(c.remoteJid)
     setErro(null)
     try {
-      const numLimpo = c.number.replace(/\D/g, '')
+      const numLimpo = normalizarNumero(c.number)
       const nomeFinal = (c.pushName || c.name || `Contato ${numLimpo}`).trim()
 
       const { error } = await supabase.from('contatos_whatsapp_manual').upsert(
@@ -172,7 +173,7 @@ export default function ImportarContatosModal({
       let contagemSucesso = 0
 
       for (const c of paraImportar) {
-        const numLimpo = c.number.replace(/\D/g, '')
+        const numLimpo = normalizarNumero(c.number)
         const nomeFinal = (c.pushName || c.name || `Contato ${numLimpo}`).trim()
 
         const { error } = await supabase.from('contatos_whatsapp_manual').upsert(

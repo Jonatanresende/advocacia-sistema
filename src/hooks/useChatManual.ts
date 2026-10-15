@@ -5,15 +5,47 @@ import { useAuth } from '../contexts/AuthContext'
 import type { ContatoManual, MensagemManual } from '../types'
 
 /**
- * Normaliza número de telefone brasileiro para o padrão de 9 dígitos.
- * Evita contatos duplicados quando a Evolution API usa o formato antigo (8 dígitos).
- * Ex: 558594517619 → 5585994517619
+ * Normaliza número de telefone brasileiro para o padrão com DDI 55 e 9 dígitos (ex: 5585999876859).
+ * Garante que contatos salvos sem o 55 (ex: 85999876859 ou 8599876859) recebam as mensagens
+ * corretamente via Evolution API.
  */
-function normalizarNumero(raw: string): string {
+export function normalizarNumero(raw: string): string {
+  if (!raw) return ''
   const digits = raw.replace(/\D/g, '')
-  if (digits.startsWith('55') && digits.length === 12) {
-    return digits.slice(0, 4) + '9' + digits.slice(4)
+  if (!digits) return ''
+
+  // Se for ID de grupo do WhatsApp (geralmente > 14 dígitos ou JID de grupo)
+  if (raw.includes('@g.us') || digits.length > 14) {
+    return digits
   }
+
+  // 10 dígitos: DDD (2) + 8 dígitos (ex: 8599876859 ou 8588887777)
+  if (digits.length === 10) {
+    const ddd = digits.slice(0, 2)
+    const rest = digits.slice(2)
+    // Celulares no Brasil iniciam com 6, 7, 8 ou 9 -> adiciona 55 e o nono dígito 9
+    if (['6', '7', '8', '9'].includes(rest[0])) {
+      return `55${ddd}9${rest}`
+    }
+    // Telefone fixo no WhatsApp
+    return `55${ddd}${rest}`
+  }
+
+  // 11 dígitos: DDD (2) + 9 dígitos (ex: 85999876859) -> adiciona DDI 55
+  if (digits.length === 11) {
+    return `55${digits}`
+  }
+
+  // 12 dígitos com 55: 55 + DDD (2) + 8 dígitos (ex: 558599876859) -> insere o nono dígito 9
+  if (digits.startsWith('55') && digits.length === 12) {
+    const ddd = digits.slice(2, 4)
+    const rest = digits.slice(4)
+    if (['6', '7', '8', '9'].includes(rest[0])) {
+      return `55${ddd}9${rest}`
+    }
+    return digits
+  }
+
   return digits
 }
 
@@ -98,25 +130,60 @@ export function useContatosManual() {
     [error, success, fetchContatos]
   )
 
-  // Editar apenas o nome / observações do contato
+  // Editar nome, WhatsApp e observações do contato
   const atualizarContato = useCallback(
-    async (id: string, nome: string, observacoes?: string) => {
+    async (id: string, nome: string, whatsapp: string, observacoes?: string) => {
       try {
-        const { error: err } = await supabase
+        const numLimpo = normalizarNumero(whatsapp)
+        if (!numLimpo) throw new Error('Número de WhatsApp inválido')
+
+        const { data, error: err } = await supabase
           .from('contatos_whatsapp_manual')
           .update({
             nome: nome.trim() || null,
+            whatsapp: numLimpo,
             observacoes: observacoes?.trim() || null,
             updated_at: new Date().toISOString(),
           })
           .eq('id', id)
+          .select()
+          .single()
+
+        if (err) {
+          if (err.code === '23505') {
+            throw new Error('Já existe outro contato cadastrado com este número de WhatsApp.')
+          }
+          throw err
+        }
+
+        success('Contato atualizado com sucesso!')
+        fetchContatos()
+        return data as ContatoManual
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Não foi possível atualizar o contato.'
+        error(msg)
+        return null
+      }
+    },
+    [error, success, fetchContatos]
+  )
+
+  // Excluir um contato e todas as suas mensagens (ON DELETE CASCADE)
+  const excluirContato = useCallback(
+    async (id: string) => {
+      try {
+        const { error: err } = await supabase
+          .from('contatos_whatsapp_manual')
+          .delete()
+          .eq('id', id)
 
         if (err) throw err
-        success('Contato atualizado!')
+        success('Contato excluído com sucesso!')
         fetchContatos()
         return true
-      } catch {
-        error('Não foi possível atualizar o contato.')
+      } catch (err: unknown) {
+        console.error('Erro ao excluir contato:', err)
+        error('Não foi possível excluir o contato.')
         return false
       }
     },
@@ -152,6 +219,7 @@ export function useContatosManual() {
     refetch: fetchContatos,
     salvarContato,
     atualizarContato,
+    excluirContato,
   }
 }
 
@@ -277,6 +345,9 @@ export function useConversaManual(contato: ContatoManual | null) {
           }
         }
 
+        // Garante que o número está normalizado com 55 antes de enviar
+        const whatsappDestino = normalizarNumero(contato.whatsapp)
+
         // Tenta enviar via Edge Function whatsapp-manual-enviar
         let enviouViaEdge = false
         try {
@@ -285,7 +356,7 @@ export function useConversaManual(contato: ContatoManual | null) {
             {
               body: {
                 contato_id: contato.id,
-                whatsapp: contato.whatsapp,
+                whatsapp: whatsappDestino,
                 texto: texto.trim() || undefined,
                 midia_url: midiaUrl || undefined,
                 tipo_midia: tipoMidia,

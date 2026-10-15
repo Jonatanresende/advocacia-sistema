@@ -150,8 +150,16 @@ function normalizarContatos(data: unknown): ContatoEvolutionFormatado[] {
     if (!numeros || numeros.length < 8) continue
 
     let numLimpo = numeros
-    if (numLimpo.startsWith('55') && numLimpo.length === 12) {
-      numLimpo = numLimpo.slice(0, 4) + '9' + numLimpo.slice(4)
+    if (numLimpo.length === 10) {
+      const ddd = numLimpo.slice(0, 2)
+      const rest = numLimpo.slice(2)
+      numLimpo = ['6', '7', '8', '9'].includes(rest[0]) ? `55${ddd}9${rest}` : `55${ddd}${rest}`
+    } else if (numLimpo.length === 11) {
+      numLimpo = `55${numLimpo}`
+    } else if (numLimpo.startsWith('55') && numLimpo.length === 12) {
+      const ddd = numLimpo.slice(2, 4)
+      const rest = numLimpo.slice(4)
+      numLimpo = ['6', '7', '8', '9'].includes(rest[0]) ? `55${ddd}9${rest}` : numLimpo
     }
 
     if (vistos.has(numLimpo)) continue

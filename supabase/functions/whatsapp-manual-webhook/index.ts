@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -34,12 +34,22 @@ function extPorMime(mime: string, fallback = 'bin'): string {
  *   14155551234   → 14155551234    (outros países → sem alteração)
  */
 function normalizarNumero(raw: string): string {
+  if (!raw) return ''
   const digits = raw.replace(/\D/g, '')
-  // Número brasileiro: começa com 55 + DDD (2 dígitos) + número
-  // Celular com 8 dígitos (formato antigo) → insere o 9
+  if (!digits) return ''
+  if (raw.includes('@g.us') || digits.length > 14) return digits
+  if (digits.length === 10) {
+    const ddd = digits.slice(0, 2)
+    const rest = digits.slice(2)
+    return ['6', '7', '8', '9'].includes(rest[0]) ? `55${ddd}9${rest}` : `55${ddd}${rest}`
+  }
+  if (digits.length === 11) {
+    return `55${digits}`
+  }
   if (digits.startsWith('55') && digits.length === 12) {
-    // 55 + DDD(2) + 8 dígitos → adiciona 9 após o DDD
-    return digits.slice(0, 4) + '9' + digits.slice(4)
+    const ddd = digits.slice(2, 4)
+    const rest = digits.slice(4)
+    return ['6', '7', '8', '9'].includes(rest[0]) ? `55${ddd}9${rest}` : digits
   }
   return digits
 }
@@ -191,11 +201,30 @@ Deno.serve(async (req) => {
 
     // ── 1. Busca ou cria o contato ──────────────────────────────────────────
     let contatoId: string | null = null
-    const { data: contatoExistente } = await supabaseAdmin
+    let { data: contatoExistente } = await supabaseAdmin
       .from('contatos_whatsapp_manual')
-      .select('id, nome')
+      .select('id, nome, whatsapp')
       .eq('whatsapp', numLimpo)
       .maybeSingle()
+
+    // Fallback: se não encontrou com 55, busca pelo formato antigo sem o DDI 55
+    if (!contatoExistente && numLimpo.startsWith('55')) {
+      const semDdi = numLimpo.slice(2)
+      const { data: contatoSemDdi } = await supabaseAdmin
+        .from('contatos_whatsapp_manual')
+        .select('id, nome, whatsapp')
+        .eq('whatsapp', semDdi)
+        .maybeSingle()
+
+      if (contatoSemDdi) {
+        contatoExistente = contatoSemDdi
+        // Atualiza para o formato normalizado com 55
+        await supabaseAdmin
+          .from('contatos_whatsapp_manual')
+          .update({ whatsapp: numLimpo, updated_at: new Date().toISOString() })
+          .eq('id', contatoSemDdi.id)
+      }
+    }
 
     if (contatoExistente) {
       contatoId = contatoExistente.id

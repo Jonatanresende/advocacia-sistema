@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import PageHeader from '../components/ui/PageHeader'
 import Card from '../components/ui/Card'
 import Button from '../components/ui/Button'
-import { useContatosManual, useConversaManual } from '../hooks/useChatManual'
+import { useContatosManual, useConversaManual, normalizarNumero } from '../hooks/useChatManual'
 import { useGravadorAudio } from '../hooks/useGravadorAudio'
 import { useNotificacaoManual } from '../hooks/useNotificacaoManual'
 import type { ContatoManual, MensagemManual } from '../types'
@@ -70,16 +70,19 @@ type MediaPreview = {
 }
 
 // ─── Modal para Cadastrar / Editar Contato ─────────────────────────────
+// ─── Modal para Cadastrar / Editar Contato ─────────────────────────────
 function ContatoModal({
   aberto,
   contatoParaEditar,
   onFechar,
   onSalvar,
+  onExcluir,
 }: {
   aberto: boolean
   contatoParaEditar?: ContatoManual | null
   onFechar: () => void
   onSalvar: (nome: string, whatsapp: string, observacoes?: string) => Promise<boolean | ContatoManual | null>
+  onExcluir?: () => void
 }) {
   const [nome, setNome] = useState('')
   const [whatsapp, setWhatsapp] = useState('')
@@ -104,7 +107,7 @@ function ContatoModal({
     e.preventDefault()
     if (!whatsapp.trim()) return
     setIsSaving(true)
-    const res = await onSalvar(nome, whatsapp, observacoes)
+    const res = await onSalvar(nome, normalizarNumero(whatsapp), observacoes)
     setIsSaving(false)
     if (res) onFechar()
   }
@@ -148,13 +151,20 @@ function ContatoModal({
               <input
                 type="text"
                 required
-                disabled={!!contatoParaEditar}
                 value={whatsapp}
                 onChange={(e) => setWhatsapp(e.target.value)}
-                placeholder="Ex: 5511999999999"
-                className="w-full pl-9 pr-3 py-2 text-[13px] rounded-[8px] bg-[var(--bg-base)] border border-[var(--border-card)] text-[var(--text-main)] outline-none focus:border-[var(--primary)] transition-colors disabled:opacity-50"
+                placeholder="Ex: 85999876859 ou 5585999876859"
+                className="w-full pl-9 pr-3 py-2 text-[13px] rounded-[8px] bg-[var(--bg-base)] border border-[var(--border-card)] text-[var(--text-main)] outline-none focus:border-[var(--primary)] transition-colors"
               />
             </div>
+            {whatsapp.trim().length >= 8 && (
+              <p className="text-[11px] text-[var(--text-muted)] mt-1.5 flex items-center gap-1.5">
+                <span>Será salvo e enviado para:</span>
+                <span className="font-mono text-emerald-400 font-semibold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                  +{normalizarNumero(whatsapp)}
+                </span>
+              </p>
+            )}
           </div>
 
           <div>
@@ -170,15 +180,97 @@ function ContatoModal({
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" size="sm" onClick={onFechar}>
-              Cancelar
-            </Button>
-            <Button type="submit" size="sm" isLoading={isSaving}>
-              Salvar Contato
-            </Button>
+          <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--border-card)]">
+            {contatoParaEditar && onExcluir ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  onFechar()
+                  onExcluir()
+                }}
+                className="text-red-400 hover:text-red-300 hover:bg-red-500/10 border-red-500/30 flex items-center gap-1.5 text-xs"
+              >
+                <Trash2 size={13} /> Excluir Contato
+              </Button>
+            ) : <div />}
+
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={onFechar} disabled={isSaving}>
+                Cancelar
+              </Button>
+              <Button type="submit" size="sm" isLoading={isSaving}>
+                {contatoParaEditar ? 'Salvar Alterações' : 'Salvar Contato'}
+              </Button>
+            </div>
           </div>
         </form>
+      </div>
+    </div>
+  )
+}
+
+// ─── Modal de Confirmação de Exclusão de Contato ───────────────────────
+function ModalConfirmarExcluirContato({
+  aberto,
+  contato,
+  onFechar,
+  onConfirmar,
+}: {
+  aberto: boolean
+  contato: ContatoManual | null
+  onFechar: () => void
+  onConfirmar: () => Promise<void>
+}) {
+  const [isDeleting, setIsDeleting] = useState(false)
+  if (!aberto || !contato) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+      <div className="w-full max-w-sm bg-[var(--bg-card)] border border-[var(--border-card)] rounded-[16px] p-5 shadow-xl space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center shrink-0">
+            <Trash2 size={20} />
+          </div>
+          <div>
+            <h3 className="font-semibold text-base text-[var(--text-main)]">
+              Excluir Contato
+            </h3>
+            <p className="text-xs text-[var(--text-muted)]">
+              Esta ação não pode ser desfeita
+            </p>
+          </div>
+        </div>
+
+        <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
+          Tem certeza que deseja excluir o contato <strong className="text-[var(--text-main)]">{contato.nome || contato.whatsapp}</strong>? Todo o histórico de mensagens deste contato será excluído permanentemente.
+        </p>
+
+        <div className="flex justify-end gap-2 pt-2 border-t border-[var(--border-card)]">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onFechar}
+            disabled={isDeleting}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            isLoading={isDeleting}
+            onClick={async () => {
+              setIsDeleting(true)
+              await onConfirmar()
+              setIsDeleting(false)
+            }}
+            className="bg-red-600 hover:bg-red-700 text-white border-transparent"
+          >
+            Excluir Contato
+          </Button>
+        </div>
       </div>
     </div>
   )
@@ -190,11 +282,13 @@ function ContatoItem({
   ativo,
   onClick,
   onEditar,
+  onExcluir,
 }: {
   contato: ContatoManual
   ativo: boolean
   onClick: () => void
   onEditar: (e: React.MouseEvent) => void
+  onExcluir?: (e: React.MouseEvent) => void
 }) {
   const dataExibicao = useMemo(() => {
     return contato.ultima_mensagem ? new Date(contato.ultima_mensagem) : null
@@ -253,17 +347,32 @@ function ContatoItem({
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          onEditar(e)
-        }}
-        title="Editar Contato"
-        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all shrink-0 cursor-pointer"
-      >
-        <Edit2 size={13} />
-      </button>
+      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onEditar(e)
+          }}
+          title="Editar Contato"
+          className="p-1.5 rounded-md hover:bg-[var(--bg-card)] text-[var(--text-muted)] hover:text-[var(--text-main)] transition-colors cursor-pointer"
+        >
+          <Edit2 size={13} />
+        </button>
+        {onExcluir && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onExcluir(e)
+            }}
+            title="Excluir Contato"
+            className="p-1.5 rounded-md hover:bg-red-500/10 text-[var(--text-muted)] hover:text-red-400 transition-colors cursor-pointer"
+          >
+            <Trash2 size={13} />
+          </button>
+        )}
+      </div>
     </div>
   )
 }
@@ -384,7 +493,7 @@ function BalaoManual({
 
 // ─── PÁGINA PRINCIPAL ───────────────────────────────────────────────────
 export default function ChatManual() {
-  const { contatos, isLoading: carregandoContatos, salvarContato, atualizarContato } = useContatosManual()
+  const { contatos, isLoading: carregandoContatos, salvarContato, atualizarContato, excluirContato } = useContatosManual()
   const { permissaoNotificacao, solicitarPermissao } = useNotificacaoManual()
   const [contatoSelecionado, setContatoSelecionado] = useState<ContatoManual | null>(null)
   const [busca, setBusca] = useState('')
@@ -394,6 +503,8 @@ export default function ChatManual() {
   const [modalContatoAberto, setModalContatoAberto] = useState(false)
   const [modalImportarAberto, setModalImportarAberto] = useState(false)
   const [contatoParaEditar, setContatoParaEditar] = useState<ContatoManual | null>(null)
+  const [contatoParaExcluir, setContatoParaExcluir] = useState<ContatoManual | null>(null)
+  const [modalExcluirAberto, setModalExcluirAberto] = useState(false)
   const [mobileView, setMobileView] = useState<'list' | 'chat'>('list')
   const [midiaModal, setMidiaModal] = useState<MediaPreview | null>(null)
 
@@ -482,9 +593,35 @@ export default function ChatManual() {
     setModalContatoAberto(true)
   }
 
+  const handleAbrirExcluirContato = (contato: ContatoManual, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    setContatoParaExcluir(contato)
+    setModalExcluirAberto(true)
+  }
+
+  const handleConfirmarExcluirContato = async () => {
+    if (!contatoParaExcluir) return
+    const idExcluido = contatoParaExcluir.id
+    const ok = await excluirContato(idExcluido)
+    if (ok) {
+      if (contatoSelecionado?.id === idExcluido) {
+        setContatoSelecionado(null)
+        setMobileView('list')
+      }
+      setModalExcluirAberto(false)
+      setContatoParaExcluir(null)
+    }
+  }
+
   const handleSalvarContatoForm = async (nome: string, whatsapp: string, observacoes?: string) => {
     if (contatoParaEditar) {
-      return await atualizarContato(contatoParaEditar.id, nome, observacoes)
+      const atualizado = await atualizarContato(contatoParaEditar.id, nome, whatsapp, observacoes)
+      if (atualizado) {
+        if (contatoSelecionado?.id === contatoParaEditar.id) {
+          setContatoSelecionado(atualizado)
+        }
+      }
+      return atualizado
     } else {
       const novocontato = await salvarContato(nome, whatsapp, observacoes)
       if (novocontato) {
@@ -576,6 +713,7 @@ export default function ChatManual() {
                     setMobileView('chat')
                   }}
                   onEditar={(e) => handleAbrirEditarContato(contato, e)}
+                  onExcluir={(e) => handleAbrirExcluirContato(contato, e)}
                 />
               ))}
             </div>
@@ -620,14 +758,25 @@ export default function ChatManual() {
                     </div>
                   </div>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleAbrirEditarContato(contatoSelecionado)}
-                    className="shrink-0 flex items-center gap-1.5"
-                  >
-                    <Edit2 size={13} /> Editar Contato
-                  </Button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAbrirEditarContato(contatoSelecionado)}
+                      className="flex items-center gap-1.5"
+                    >
+                      <Edit2 size={13} /> Editar Contato
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleAbrirExcluirContato(contatoSelecionado)}
+                      className="flex items-center gap-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 border-red-500/20"
+                      title="Excluir Contato"
+                    >
+                      <Trash2 size={13} /> Excluir
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Mensagens */}
@@ -786,6 +935,22 @@ export default function ChatManual() {
         contatoParaEditar={contatoParaEditar}
         onFechar={() => setModalContatoAberto(false)}
         onSalvar={handleSalvarContatoForm}
+        onExcluir={() => {
+          if (contatoParaEditar) {
+            handleAbrirExcluirContato(contatoParaEditar)
+          }
+        }}
+      />
+
+      {/* Modal de confirmação para excluir contato */}
+      <ModalConfirmarExcluirContato
+        aberto={modalExcluirAberto}
+        contato={contatoParaExcluir}
+        onFechar={() => {
+          setModalExcluirAberto(false)
+          setContatoParaExcluir(null)
+        }}
+        onConfirmar={handleConfirmarExcluirContato}
       />
 
       {/* Modal de Importação de Contatos do WhatsApp */}

@@ -1,9 +1,30 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+function normalizarNumero(raw: string): string {
+  if (!raw) return ''
+  const digits = raw.replace(/\D/g, '')
+  if (!digits) return ''
+  if (raw.includes('@g.us') || digits.length > 14) return digits
+  if (digits.length === 10) {
+    const ddd = digits.slice(0, 2)
+    const rest = digits.slice(2)
+    return ['6', '7', '8', '9'].includes(rest[0]) ? `55${ddd}9${rest}` : `55${ddd}${rest}`
+  }
+  if (digits.length === 11) {
+    return `55${digits}`
+  }
+  if (digits.startsWith('55') && digits.length === 12) {
+    const ddd = digits.slice(2, 4)
+    const rest = digits.slice(4)
+    return ['6', '7', '8', '9'].includes(rest[0]) ? `55${ddd}9${rest}` : digits
+  }
+  return digits
 }
 
 Deno.serve(async (req) => {
@@ -47,7 +68,7 @@ Deno.serve(async (req) => {
       return json({ error: 'Campos obrigatórios: contato_id, whatsapp' }, 400)
     }
 
-    const numLimpo = String(whatsapp).replace(/\D/g, '')
+    const numLimpo = normalizarNumero(String(whatsapp))
 
     // Variáveis de ambiente da Evolution API para o 2º número
     const evoUrl = (Deno.env.get('EVOLUTION_API_URL_2') || Deno.env.get('EVOLUTION_API_URL') || '').replace(/\/$/, '')
